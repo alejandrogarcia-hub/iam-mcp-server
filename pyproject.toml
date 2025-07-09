@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+# Tell Hatch we’re using a src layout
+sources = ["src"]
+
+[tool.hatch.build.targets.wheel]
+# Point to the real package directory
+packages = ["mcp_server_iam"]
+
+[project.scripts]
+# Point to the real module path
+mcp-server-iam = "mcp_server_iam.__main__:main"
+
+
+[project]
+name = "iam-mcp-server"
+version = "1.0.0"
+description = "Individual Application Mesh, MCP Server"
+readme = "README.md"
+requires-python = ">=3.11"
+
+keywords = ["git", "mcp", "server", "jobs", "resume", "automation"]
+license = { text = "MIT" }
+
+authors = [{ name = "Alejandro Garcia" }]
+maintainers = [
+    { name = "Alejandro Garcia", email = "github_dev.chowder574@passmail.net" },
+]
+
+dependencies = [
+    "mcp[cli]>=1.10.1",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "python-dotenv>=1.1.1",
+    "python-json-logger>=3.3.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.4.1", "pytest-asyncio>=1.0.0", "ruff>=0.12.1"]
+
+[project.urls]
+Homepage = "https://github.com/alejandrogarcia-hub/iam-mcp-server"
+Repository = "https://github.com/alejandrogarcia-hub/iam-mcp-server"
+Issues = "https://github.com/alejandrogarcia-hub/iam-mcp-server/issues"
+
+[tool.uv]
+resolution = "highest"
+default-groups = ["dev"]
+required-version = ">=0.7.19"
+
+[tool.uv-dynamic-versioning]
+vcs = "git"
+style = "pep440"
+bump = true
