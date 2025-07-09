@@ -1,6 +1,6 @@
 from mcp.server.fastmcp import FastMCP
 
-from mcp_server_iam.config import settings
+from config import settings
 
 mcp = FastMCP(
     name=settings.app_name,

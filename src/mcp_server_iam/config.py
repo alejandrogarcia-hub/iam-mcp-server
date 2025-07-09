@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -162,37 +161,6 @@ class AppConfig(BaseSettings):
                 raise ValueError(f"Log level {v} is outside valid range")
 
         return logging.INFO
-
-    @field_validator("log_dir", mode="before")
-    @classmethod
-    def expand_path_variables(cls, v):
-        """Expand ``~`` and ``$VARS`` in any path-like configuration value.
-
-        This allows users to write paths such as ``$HOME/iam/logs`` or
-        ``~/iam/data`` in *environment variables* or the local ``.env`` file
-        and have them automatically resolved to their absolute counterparts.
-
-        Also ensures the directory exists by creating it if necessary.
-        """
-        if isinstance(v, str | Path):
-            # Convert to string first so that both ``str`` and ``Path`` inputs
-            # are handled uniformly, then expand shell variables and the user
-            # home directory, finally cast back to ``Path``.
-            expanded = os.path.expanduser(os.path.expandvars(str(v)))
-            path_obj = Path(expanded)
-
-            # Ensure the path is absolute for consistency
-            if not path_obj.is_absolute():
-                path_obj = Path.cwd() / path_obj
-
-            # Create the directory if it doesn't exist
-            try:
-                path_obj.mkdir(parents=True, exist_ok=True)
-            except OSError as e:
-                raise ConfigurationError(f"Failed to create log directory: {e}") from e
-
-            return path_obj
-        return v
 
     @field_validator("resume_aggregation_filename", mode="after")
     @classmethod
