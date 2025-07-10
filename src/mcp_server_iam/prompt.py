@@ -88,3 +88,95 @@ async def analyze_job_market(
 
     Thank you for your meticulous analysis.  
     """
+
+
+def save_jobs(
+    jobs_dir: Annotated[str, Field(description="Directory to save jobs")],
+    date: Annotated[str, Field(description="Date of the job search")],
+    role: Annotated[str, Field(description="Role of the job search")],
+    city: Annotated[str, Field(description="City of the job search")],
+    n_jobs: Annotated[int, Field(description="Number of jobs to save")],
+) -> str:
+    """
+    Generate instructions for saving job search results to a JSON file.
+
+    Creates detailed LLM instructions for properly formatting and saving
+    job data as a structured JSON file with consistent naming conventions.
+
+    Args:
+        jobs_dir: Target directory path for saving the job file
+        date: Date when the job search was performed (YYYY-MM-DD format)
+        role: Job role/title that was searched for
+        city: City/location that was searched in
+        n_jobs: Number of job results to save
+
+    Returns:
+        str: Formatted prompt with detailed instructions for the LLM to save
+        job data as a properly structured JSON file.
+    """
+    # Sanitize inputs for safe filename generation
+    safe_role = "".join(c for c in role if c.isalnum() or c in (" ", "-", "_")).strip()
+    safe_city = "".join(c for c in city if c.isalnum() or c in (" ", "-", "_")).strip()
+    safe_role = safe_role.replace(" ", "_")
+    safe_city = safe_city.replace(" ", "_")
+
+    return f"""
+# System Instructions for Saving Job Search Results
+
+You are tasked with saving job search results to a structured JSON file. Follow these instructions precisely:
+
+## File Location and Naming
+- **Directory**: Save to `{jobs_dir}` directory
+- **Filename**: `{date}_{safe_role}_{safe_city}_{n_jobs}.json`
+- **Format**: JSON array containing job objects
+
+## Required JSON Structure
+Each job must be saved with this exact structure:
+
+```json
+[
+  {{
+    "job_id": "string - unique identifier for the job",
+    "title": "string - job title/position name", 
+    "company": "string - employer/company name",
+    "city": "string - job location city",
+    "country": "string - job location country",
+    "description": "string - job description or summary",
+    "apply_link": "string - application URL or 'Not provided'",
+    "saved_date": "{date}",
+    "search_criteria": {{
+      "role": "{role}",
+      "city": "{city}",
+      "date_searched": "{date}"
+    }}
+  }}
+]
+```
+
+## Critical Instructions
+
+1. **Create the directory** `{jobs_dir}` if it doesn't exist
+2. **Use the EXACT filename format**: `{date}_{safe_role}_{safe_city}_{n_jobs}.json`
+3. **Ensure valid JSON**: 
+   - Proper escaping of quotes and special characters
+   - No trailing commas
+   - Proper array structure with square brackets
+4. **Handle missing data**: Use `null` for missing fields, never leave undefined
+5. **Preserve data integrity**: Don't modify or truncate important information
+6. **Add metadata**: Include search criteria and save date for tracking
+
+## Data Validation
+- Verify all job objects have the required fields
+- Ensure `apply_link` is a valid URL or "Not provided"
+- Check that `job_id` is unique within the array
+- Validate that the JSON is properly formatted before saving
+
+## Success Confirmation
+After saving, confirm:
+- File was created at the correct path
+- JSON is valid and parseable  
+- All {n_jobs} jobs were saved successfully
+- File size is reasonable (not empty or corrupted)
+
+**IMPORTANT**: Use the `write_file` tool to create the JSON file with the exact filename and structure specified above.
+"""

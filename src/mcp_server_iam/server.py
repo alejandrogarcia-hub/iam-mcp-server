@@ -3,6 +3,7 @@ from typing import Annotated, Literal
 from config import settings
 from mcp.server.fastmcp import FastMCP
 from prompt import analyze_job_market as analyze_job_market_prompt
+from prompt import save_jobs as save_jobs_prompt
 from pydantic import Field
 from tool import search_jobs as search_jobs_impl
 
@@ -130,4 +131,72 @@ async def analyze_job_market(
         country=country,
         platform=platform,
         num_jobs=num_jobs,
+    )
+
+
+@mcp.prompt(
+    name="save_jobs",
+    description="Generate instructions for saving job search results to a structured JSON file",
+)
+async def save_jobs(
+    jobs_dir: Annotated[
+        str,
+        Field(
+            description="Directory path where the job file should be saved",
+            min_length=1,
+        ),
+    ],
+    date: Annotated[
+        str,
+        Field(
+            description="Date of the job search in YYYY-MM-DD format",
+            pattern=r"^\d{4}-\d{2}-\d{2}$",
+        ),
+    ],
+    role: Annotated[
+        str,
+        Field(
+            description="Job role or title that was searched for",
+            min_length=1,
+        ),
+    ],
+    city: Annotated[
+        str,
+        Field(
+            description="City or location that was searched in",
+            min_length=1,
+        ),
+    ],
+    n_jobs: Annotated[
+        int,
+        Field(
+            description="Number of job results to save",
+            ge=1,
+            le=100,
+        ),
+    ],
+) -> str:
+    """
+    Generate detailed instructions for saving job search results as JSON.
+
+    This prompt provides comprehensive guidance for LLMs to properly format
+    and save job data as a structured JSON file with consistent naming and
+    validation requirements.
+
+    Args:
+        jobs_dir: Target directory for saving the job file
+        date: Date when the job search was performed (YYYY-MM-DD)
+        role: Job role/title that was searched for
+        city: City/location that was searched in
+        n_jobs: Number of job results to save
+
+    Returns:
+        str: Detailed instructions for saving job data as JSON
+    """
+    return save_jobs_prompt(
+        jobs_dir=jobs_dir,
+        date=date,
+        role=role,
+        city=city,
+        n_jobs=n_jobs,
     )
