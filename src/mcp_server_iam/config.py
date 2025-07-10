@@ -72,10 +72,10 @@ class AppConfig(BaseSettings):
         examples=["stdio", "sse", "mcp_remote"],
     )
 
-    resume_aggregation_filename: str = Field(
-        default="resume_aggregation.md",
-        alias="RESUME_AGGREGATION_FILENAME",
-        description="Default filename for resume aggregation",
+    resume_mesh_filename: str = Field(
+        default="resume_mesh.md",
+        alias="RESUME_MESH_FILENAME",
+        description="Default filename for resume mesh",
         pattern=r"^[a-zA-Z0-9_\-]+\.md$",
     )
 
@@ -175,12 +175,12 @@ class AppConfig(BaseSettings):
 
         return logging.INFO
 
-    @field_validator("resume_aggregation_filename", mode="after")
+    @field_validator("resume_mesh_filename", mode="after")
     @classmethod
     def validate_filename(cls, v: str) -> str:
         """Validate filename format."""
         if not v.endswith(".md"):
-            raise ValueError("Resume aggregation filename must end with .md")
+            raise ValueError("Resume mesh filename must end with .md")
 
         # Check for invalid characters
         invalid_chars = ["/", "\\", ":", "*", "?", '"', "<", ">", "|"]

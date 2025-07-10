@@ -1,10 +1,13 @@
+from datetime import datetime
 from typing import Annotated, Literal
 
-from config import settings
+from pydantic import Field
 from mcp.server.fastmcp import FastMCP
+
+from config import settings
 from prompt import analyze_job_market as analyze_job_market_prompt
 from prompt import save_jobs as save_jobs_prompt
-from pydantic import Field
+from prompt import mesh_resumes as mesh_resumes_prompt
 from tool import search_jobs as search_jobs_impl
 
 mcp = FastMCP(
@@ -146,13 +149,6 @@ async def save_jobs(
             min_length=1,
         ),
     ],
-    date: Annotated[
-        str,
-        Field(
-            description="Date of the job search in YYYY-MM-DD format",
-            pattern=r"^\d{4}-\d{2}-\d{2}$",
-        ),
-    ],
     role: Annotated[
         str,
         Field(
@@ -193,10 +189,55 @@ async def save_jobs(
     Returns:
         str: Detailed instructions for saving job data as JSON
     """
+    date = datetime.now().strftime("%Y-%m-%d")
+
     return save_jobs_prompt(
         jobs_dir=jobs_dir,
         date=date,
         role=role,
         city=city,
         n_jobs=n_jobs,
+    )
+
+
+@mcp.prompt(
+    name="mesh_resumes",
+    description=(
+        "A comprehensive prompt for meshing multiple resumes into a single resume. "
+        "This prompt guides the LLM through the process of converting, cleaning, extracting, "
+        "and merging information from multiple resume files into a single comprehensive document."
+    ),
+)
+def mesh_resumes(
+    resume_mesh_directory: Annotated[
+        str,
+        Field(
+            description="Directory to save the resume mesh",
+            min_length=1,
+        ),
+    ],
+) -> str:
+    """
+    Generate a resume mesh prompt for merging multiple resumes or CVs.
+
+    Creates a structured prompt to process multiple resume files and merge them into
+    a single comprehensive resume document. The output should be saved as
+    resume_mesh.md in the data/resumes directory using the write_file tool.
+
+    This prompt handles conversion, cleaning, extraction, merging, and alignment
+    of information from multiple resume sources with quality requirements and
+    formatting guidelines.
+
+    Args:
+        resume_mesh_directory: Directory to save the resume mesh
+
+    Returns:
+        str: Complete prompt text for resume mesh process
+    """
+    date = datetime.now().strftime("%Y-%m-%d")
+
+    return mesh_resumes_prompt(
+        resume_mesh_directory=resume_mesh_directory,
+        resume_mesh_filename=settings.resume_mesh_filename,
+        date=date,
     )
