@@ -4,6 +4,7 @@ from config import settings
 from mcp.server.fastmcp import FastMCP
 from prompt import analyze_job_market as analyze_job_market_prompt
 from pydantic import Field
+from tool import search_jobs as search_jobs_impl
 
 mcp = FastMCP(
     name=settings.app_name,
@@ -69,7 +70,7 @@ async def search_jobs(
     Returns:
         List of job dictionaries with details, or error message dict if search fails
     """
-    return search_jobs(
+    return search_jobs_impl(
         role=role,
         city=city,
         country=country,
@@ -123,7 +124,7 @@ async def analyze_job_market(
         ranges, skill requirements, and employment patterns for the specified position.
     """
 
-    return analyze_job_market_prompt(
+    return await analyze_job_market_prompt(
         role=role,
         city=city,
         country=country,

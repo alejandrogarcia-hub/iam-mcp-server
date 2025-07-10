@@ -155,14 +155,10 @@ def search_jobs(
             desc = job.get("job_description", "")
             summary = ""
             if isinstance(desc, str):
+                summary = desc
                 if slice_job_description is not None and slice_job_description > 0:
                     if len(desc) > slice_job_description:
                         summary = desc[:slice_job_description] + "\n...\n"
-                    else:
-                        summary = desc
-                else:
-                    # When slice_job_description is None or 0, return full description
-                    summary = desc
 
             results.append(
                 {
