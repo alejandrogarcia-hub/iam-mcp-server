@@ -69,7 +69,7 @@ class AppConfig(BaseSettings):
         default="stdio",
         description="Transport for MCP server",
         alias="MCP_TRANSPORT",
-        choices=["stdio", "sse", "mcp_remote"],
+        examples=["stdio", "sse", "mcp_remote"],
     )
 
     resume_aggregation_filename: str = Field(
@@ -99,6 +99,19 @@ class AppConfig(BaseSettings):
         alias="CACHE_TTL",
         description="Cache time-to-live in seconds",
         gt=0,
+    )
+
+    rapidapi_key: str | None = Field(
+        default="",
+        alias="RAPIDAPI_KEY",
+        description="RapidAPI key for external API access",
+    )
+
+    rapidapi_host: str | None = Field(
+        default="jsearch.p.rapidapi.com",
+        alias="RAPIDAPI_HOST",
+        description="RapidAPI host endpoint",
+        pattern=r"^[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}$",
     )
 
     @field_validator("app_name", mode="before")
