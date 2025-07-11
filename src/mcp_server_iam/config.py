@@ -73,10 +73,10 @@ class AppConfig(BaseSettings):
     )
 
     resume_mesh_filename: str = Field(
-        default="resume_mesh.md",
+        default="resume_mesh",
         alias="RESUME_MESH_FILENAME",
         description="Default filename for resume mesh",
-        pattern=r"^[a-zA-Z0-9_\-]+\.md$",
+        pattern=r"^[a-zA-Z0-9_\-]+$",
     )
 
     # Performance settings
