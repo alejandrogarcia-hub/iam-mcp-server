@@ -180,3 +180,110 @@ After saving, confirm:
 
 **IMPORTANT**: Use the `write_file` tool to create the JSON file with the exact filename and structure specified above.
 """
+
+
+def mesh_resumes(
+    resume_mesh_directory: Annotated[
+        str,
+        Field(
+            description="Directory to save the resume mesh",
+            min_length=1,
+        ),
+    ],
+    resume_mesh_filename: Annotated[
+        str,
+        Field(
+            description="Filename for the resume mesh", pattern=r"^[a-zA-Z0-9_\-]+\.md$"
+        ),
+    ],
+    date: Annotated[str, Field(description="Date of the job search")],
+) -> str:
+    """
+    Generate a resume mesh prompt for merging multiple resumes.
+
+    Returns:
+        The resume mesh prompt string
+    """
+
+    return f"""You are tasked with creating a resume mesh from multiple resumes, or CVs, that are attached to this conversation.
+
+**Process**:
+
+1. **Conversion (MCP host)**:
+   - For each attached resume file, convert PDF files to Markdown format. Maintain the original layout and formatting.
+   - For files already in text/markdown format, proceed directly to preprocessing
+
+2. **Pre-processing (MCP host)**:
+   - CLEAN bad grammar and FIX typos in each resume
+   - Do NOT alter the meaning or add new content
+   - PRESERVE all original information and context
+
+3. **Extraction (LLM)**:
+   - Extract content under each section
+   - Identify other clearly labeled sections and extract their content
+   - Preserve dates, locations, company names, and specific achievements
+
+4. **Merging and Alignment (LLM)**:
+   - Group entries by section (for same sections) OR entity (same job title, employer, and time frame) across all resumes
+   - For each group, include Employer, Title, Location, and Dates ONCE
+   - Combine all related bullet points and paragraphs from different resumes
+   - Maintain chronological order within sections
+
+**Example Merging**:
+```
+From Resume 1:
+
+Summary
+
+Enterprise data and AI architect, with 10+ years of experience designing and delivering cloud-scale AI, data-analytics and backend platforms in finance, IoT and fintech.
+
+Sygnum Bank, Zurich, Switzerland
+Solutions Architect Specialist, August 2022 – December 2024
+- Led AI-based portfolio to enhance operational efficiency
+- Technical Lead for end-to-end triage system for operational incidents based on RAG, serverless architecture, AI agents and workflows, achieving 20% reduction in operational costs and 30% reduction in critical system incidents  
+
+From Resume 2:
+
+Summary
+
+Computer Scientist with expertise in enterprise data architecture, implementing data platforms, and integrating diverse data sources for AI/ML activities.
+
+Sygnum Bank, Zurich, Switzerland  
+Solutions Architect Specialist, August 2022 – December 2024
+- Leadership and technical expertise across multiple value streams
+- Mentored tech leads in shipping products within regulated environment
+
+Merged Output:
+
+## Summary
+
+Enterprise data and AI architect, with 10+ years of experience designing and delivering cloud-scale AI, data-analytics and backend platforms in finance, IoT and fintech. 
+
+Computer Scientist with expertise in enterprise data architecture, implementing data platforms, and integrating diverse data sources for AI/ML activities.
+
+## Sygnum Bank
+**Solutions Architect Specialist** | Zurich, Switzerland | August 2022 – December 2024
+
+- Led AI-based portfolio to enhance operational efficiency and business competitiveness within regulated financial environment
+- Technical Lead for end-to-end triage system for operational incidents based on RAG, serverless architecture, AI agents and workflows, achieving 20% reduction in operational costs and 30% reduction in critical system incidents  
+- Leadership and technical expertise across multiple value streams, driving innovation in agile environment
+- Mentored tech leads in shipping products within regulated technological landscape
+```
+
+**Output**: 
+- Generate the complete resume mesh as a valid markdown document
+- The markdown document shall optimize for LLM reading and understanding
+
+**Quality Requirements**:
+- Maintain professional tone and accuracy
+- Ensure no information loss from source resumes
+- Preserve specific achievements, metrics, skills and technical details
+- Use consistent formatting throughout the document
+
+**Save the resume mesh**:
+- Use the MCP tool `write_file` to save the generated resume mesh
+- The file shall be saved in the directory `{resume_mesh_directory}` with the filename `{resume_mesh_filename}_{date}.md`
+- Use the EXACT filename format: `{resume_mesh_filename}_{date}.md`
+
+**IMPORTANT**: Use the `write_file` tool to save the markdown file with the exact directory, filename and structure specified above.
+"""
