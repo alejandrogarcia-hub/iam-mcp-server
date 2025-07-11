@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 from config import settings
 from mcp.server.fastmcp import FastMCP
 from prompt import analyze_job_market as analyze_job_market_prompt
-from prompt import generate_resume_prompt
+from prompt import generate_cover_letter_prompt, generate_resume_prompt
 from prompt import mesh_resumes as mesh_resumes_prompt
 from prompt import save_jobs as save_jobs_prompt
 from pydantic import Field
@@ -267,6 +267,7 @@ def generate_resume(
     Resume prompt with instructions for the LLM to generate a resume for a given role, company and job description
 
     Args:
+        save_directory: The directory to save the resume
         role: The role to generate a resume for
         company: The company to generate a resume for
         job_description: The job description to generate a resume for
@@ -275,6 +276,42 @@ def generate_resume(
         The generated resume in markdown format
     """
     return generate_resume_prompt(
+        save_directory=save_directory,
+        role=role,
+        company=company,
+        job_description=job_description,
+    )
+
+
+@mcp.prompt(
+    name="generate_cover_letter",
+    description="Cover letter prompt with instructions for the LLM to generate a cover letter for a given role, company and job description",
+)
+def generate_cover_letter(
+    save_directory: Annotated[
+        str, Field(description="Directory to save the cover letter")
+    ],
+    role: Annotated[str, Field(description="The role to generate a cover letter for")],
+    company: Annotated[
+        str, Field(description="The company to generate a cover letter for")
+    ],
+    job_description: Annotated[
+        str, Field(description="The job description to generate a cover letter for")
+    ],
+) -> str:
+    """
+    Cover letter prompt with instructions for the LLM to generate a cover letter for a given role, company and job description
+
+    Args:
+        save_directory: The directory to save the cover letter
+        role: The role to generate a cover letter for
+        company: The company to generate a cover letter for
+        job_description: The job description to generate a cover letter for
+
+    Returns:
+        The generated cover letter in markdown format
+    """
+    return generate_cover_letter_prompt(
         save_directory=save_directory,
         role=role,
         company=company,
