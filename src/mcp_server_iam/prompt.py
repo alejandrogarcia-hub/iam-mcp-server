@@ -214,21 +214,21 @@ You are tasked with creating a resume mesh from multiple resumes, or CVs, that a
 
 ## Process
 
-1. **Conversion (MCP host)**
+### 1. Conversion (MCP host)
    - For each attached resume file, convert PDF files to Markdown format. Maintain the original layout and formatting.
    - For files already in text/markdown format, proceed directly to preprocessing
 
-2. **Pre-processing (MCP host)**:
+### 2. Pre-processing (MCP host)
    - CLEAN bad grammar and FIX typos in each resume
    - Do NOT alter the meaning or add new content
    - PRESERVE all original information and context
 
-3. **Extraction (LLM)**:
+### 3. Extraction (LLM)
    - Extract content under each section
    - Identify other clearly labeled sections and extract their content
    - Preserve dates, locations, company names, and specific achievements
 
-4. **Merging and Alignment (LLM)**:
+### 4. Merging and Alignment (LLM)
    - Group entries by section (for same sections) OR entity (same job title, employer, and time frame) across all resumes
    - For each group, include Employer, Title, Location, and Dates ONCE
    - Combine all related bullet points and paragraphs from different resumes
@@ -334,8 +334,9 @@ def generate_resume_prompt(
     Generate a resume prompt for a given job title, company and job description.
 
     Args:
-        job_title: The job title to generate a resume for
-        job_company: The company to generate a resume for
+        save_directory: The directory to save the resume
+        role: The role to generate a resume for
+        company: The company to generate a resume for
         job_description: The job description to generate a resume for
 
     Returns:
@@ -363,26 +364,27 @@ def generate_resume_prompt(
     </job_description>
 
     Use your extensive experience to analyze the job description, identifying key skills and qualifications required.
+
     ## INSTRUCTIONS
 
-    1. Analyze the job description:
+    ### 1. Analyze the job description:
     - Load the job description from the provided `<job_description>`.
     - List all requirements verbatim in the following categories:
         - Technical (languages, frameworks, tools)
         - Hard skills
         - Soft skills
 
-    2. Verify source scope:
+    ### 2. Verify source scope:
     - State: "All subsequent resume content will only be drawn from {resume_markdown_file}."
     - If you detect a requirement not covered in resume_aggregation, STOP and ASK:
         - "The JD requires ______ but I don't see that in resume_aggregation. Please provide or clarify."
 
-    3. Map and extract relevant information:
+    ### 3. Map and extract relevant information:
     - For each JD requirement, locate matching bullet(s) or sections in {resume_markdown_file}.
     - Copy EXACT text or very-tight abstractions—no invented metrics or projects or job duties.
     - When selecting bullets, prefer ones that contain BOTH the required skill/keyword AND an achievement.
 
-    4. Assemble the ATS-optimized Markdown resume:
+    ### 4. Assemble the ATS-optimized Markdown resume:
     - CREATE a concise, clean Markdown resume.
         - Sections, as in the {resume_markdown_file}
     - 3 to 4 bullets each, directly lifted or minimally edited from {resume_markdown_file}.
@@ -393,17 +395,17 @@ def generate_resume_prompt(
     - AVOID FANCY WORDS. USE SIMPLE BUT MEANINGFUL WORDS.
     - Education & Certs: Copy EXACTLY from {resume_markdown_file}.
 
-    5. Formatting Rules:
+    ### 5. Formatting Rules:
     - Use EXACT keywords from the JD (for ATS alignment).
     - Brief (LESS THAN 40 words) introductory section, IF AVAILABLE, typically labeled Introduction, Summary, About Me, Profile, or similar—used to describe the applicant at a high level.
     - Bullets should be LESS THAN 40 words.
     - NO superlatives or invented achievements.
     - Use ACTIVE verbs and maintain a professional tone.
 
-    6. Self-check and audit:
+    ### 6. Self-check and audit:
     - CONFIRM: "All content sourced 100% from {resume_markdown_file}."
 
-    7. Output:
+    ### 7. Output:
     - Provide ONLY the final Markdown document.
     - If any gap appears, stop and ask a clarifying question instead of guessing.
 
@@ -422,3 +424,123 @@ def generate_resume_prompt(
     ## IMPORTANT
     - Use the `write_file` tool to save the markdown file with the exact directory, filename and structure specified above.
     """
+
+
+def generate_cover_letter_prompt(
+    save_directory: Annotated[
+        str,
+        Field(
+            description="Directory location of the resume",
+            min_length=1,
+        ),
+    ],
+    role: Annotated[str, Field(description="The role to generate a cover letter for")],
+    company: Annotated[
+        str, Field(description="The company to generate a cover letter for")
+    ],
+    job_description: Annotated[
+        str, Field(description="The job description to generate a cover letter for")
+    ],
+) -> str:
+    """
+    Generate a cover letter prompt for a given job title, company and job description.
+
+    Args:
+        save_directory: The directory to save the cover letter
+        role: The role to generate a cover letter for
+        company: The company to generate a cover letter for
+        job_description: The job description to generate a cover letter for
+
+    Returns:
+        The generated cover letter prompt in string format
+    """
+
+    date = datetime.now().strftime("%Y-%m-%d")
+    safe_role = _sanitize_for_filename(role)
+    safe_company = _sanitize_for_filename(company)
+
+    return f"""
+# System Instructions for Generating a Cover Letter
+Act like a seasoned career consultant and cover letter expert specializing in crafting tailor-made cover letter for job seekers. 
+- You are an expert certified cover letter writer, and an expert in ATS (Applicant Tacking Systems). 
+- You have a deep understanding of what hiring managers in various industries look for in candidates. 
+- Your expertise includes transforming job descriptions into compelling cover letter content. 
+- Create a compelling cover letter for the "{safe_role}" position at {safe_company}.
+
+## SOURCES (Use ONLY these)
+### 1. Job Description: 
+<job_description>
+{job_description}
+</job_description>
+### 2. Resume: Use the `resume` file markdown.
+
+## CONSTRAINTS
+- No invented information, dates, or metrics
+- If required information is missing, ask a clarifying question
+- Use exact keywords from job description for ATS optimization
+
+## INSTRUCTIONS
+
+### 1. Requirements Analysis
+Extract and categorize ALL job requirements:
+- Technical Skills: (languages, frameworks, tools)
+- Professional Skills: (experience, qualifications)  
+- Soft Skills: (leadership, communication, etc.)
+
+### 2. Research Context
+If you have web search capability:
+- Find 1-2 key facts about {safe_company} (mission, recent news, industry position)
+If you don't have web search:
+- Use information from job description about company
+
+### 3. Create AIDA Cover Letter
+
+Structure with these markdown sections:
+
+## Cover Letter for {safe_role} at {safe_company}
+
+### Opening (Attention)
+- Engaging hook that shows knowledge of company and role
+- Connect your background to their mission/values
+- 2-3 sentences maximum
+
+### Qualifications (Interest)  
+- "I bring the following qualifications for this {role} role:"
+- 3-4 bullet points mapping your experience (from MCP resource) to their top requirements
+- Focus on exact keyword matches from job description
+- Include achievements where available
+
+### Value Proposition (Desire)
+- 2-3 sentences showing unique value you bring
+- Connect your specific achievements to their business goals
+- Demonstrate understanding of their challenges/opportunities
+
+### Call to Action (Action)
+- Professional closing with interview invitation
+- Preferred contact method (if available in MCP resource)
+- Thank you and next steps
+
+## FORMATTING
+- Professional, conversational tone
+- Concise paragraphs (2-4 sentences)
+- Strong action verbs
+- Embed job description keywords naturally
+
+## OUTPUT
+Provide ONLY the final markdown cover letter. No analysis, reasoning, or audit logs in the output.
+
+## QUALITY CHECK
+Before finalizing, verify:
+- All content sourced from provided materials
+- Job keywords naturally integrated  
+- Professional yet personable tone
+- Clear value proposition and call to action
+
+ ## Save the cover letter
+- Use the MCP tool `write_file` to save the generated cover letter
+- The file shall be saved in the directory `{save_directory}` with the filename `{date}_{safe_company}_{safe_role}_cover_letter.md`
+- Use the EXACT filename format: `{date}_{safe_company}_{safe_role}_cover_letter.md`
+
+## IMPORTANT
+- Use the `write_file` tool to save the markdown file with the exact directory, filename and structure specified above.
+"""
