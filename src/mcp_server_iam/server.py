@@ -1,13 +1,13 @@
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import Field
-from mcp.server.fastmcp import FastMCP
-
 from config import settings
+from mcp.server.fastmcp import FastMCP
 from prompt import analyze_job_market as analyze_job_market_prompt
-from prompt import save_jobs as save_jobs_prompt
+from prompt import generate_resume_prompt
 from prompt import mesh_resumes as mesh_resumes_prompt
+from prompt import save_jobs as save_jobs_prompt
+from pydantic import Field
 from tool import search_jobs as search_jobs_impl
 
 mcp = FastMCP(
@@ -209,7 +209,7 @@ async def save_jobs(
     ),
 )
 def mesh_resumes(
-    resume_mesh_directory: Annotated[
+    save_directory: Annotated[
         str,
         Field(
             description="Directory to save the resume mesh",
@@ -218,7 +218,7 @@ def mesh_resumes(
     ],
 ) -> str:
     """
-    Generate a resume mesh prompt for merging multiple resumes or CVs.
+    Resume mesh prompt with instructions for the LLM to merge multiple resumes or CVs.
 
     Creates a structured prompt to process multiple resume files and merge them into
     a single comprehensive resume document. The output should be saved as
@@ -229,7 +229,7 @@ def mesh_resumes(
     formatting guidelines.
 
     Args:
-        resume_mesh_directory: Directory to save the resume mesh
+        save_directory: Directory to save the resume mesh
 
     Returns:
         str: Complete prompt text for resume mesh process
@@ -237,7 +237,46 @@ def mesh_resumes(
     date = datetime.now().strftime("%Y-%m-%d")
 
     return mesh_resumes_prompt(
-        resume_mesh_directory=resume_mesh_directory,
+        save_directory=save_directory,
         resume_mesh_filename=settings.resume_mesh_filename,
         date=date,
+    )
+
+
+@mcp.prompt(
+    name="generate_resume",
+    description="Resume prompt with instructions for the LLM to generate a resume for a given role, company and job description",
+)
+def generate_resume(
+    save_directory: Annotated[
+        str,
+        Field(
+            description="Directory to save the resume",
+            min_length=1,
+        ),
+    ],
+    role: Annotated[str, Field(description="The role to generate a resume for")],
+    company: Annotated[
+        str, Field(description="The company to generate a resume for", min_length=1)
+    ],
+    job_description: Annotated[
+        str, Field(description="The job description to generate a resume for")
+    ],
+) -> str:
+    """
+    Resume prompt with instructions for the LLM to generate a resume for a given role, company and job description
+
+    Args:
+        role: The role to generate a resume for
+        company: The company to generate a resume for
+        job_description: The job description to generate a resume for
+
+    Returns:
+        The generated resume in markdown format
+    """
+    return generate_resume_prompt(
+        save_directory=save_directory,
+        role=role,
+        company=company,
+        job_description=job_description,
     )

@@ -1,3 +1,5 @@
+from datetime import datetime
+from functools import lru_cache
 from typing import Annotated, Literal
 
 from pydantic import Field
@@ -178,12 +180,13 @@ After saving, confirm:
 - All {n_jobs} jobs were saved successfully
 - File size is reasonable (not empty or corrupted)
 
-**IMPORTANT**: Use the `write_file` tool to create the JSON file with the exact filename and structure specified above.
+## IMPORTANT
+- Use the `write_file` tool to create the JSON file with the exact filename and structure specified above.
 """
 
 
 def mesh_resumes(
-    resume_mesh_directory: Annotated[
+    save_directory: Annotated[
         str,
         Field(
             description="Directory to save the resume mesh",
@@ -205,11 +208,13 @@ def mesh_resumes(
         The resume mesh prompt string
     """
 
-    return f"""You are tasked with creating a resume mesh from multiple resumes, or CVs, that are attached to this conversation.
+    return f"""
+# System Instructions for Creating a Resume Mesh
+You are tasked with creating a resume mesh from multiple resumes, or CVs, that are attached to this conversation.
 
-**Process**:
+## Process
 
-1. **Conversion (MCP host)**:
+1. **Conversion (MCP host)**
    - For each attached resume file, convert PDF files to Markdown format. Maintain the original layout and formatting.
    - For files already in text/markdown format, proceed directly to preprocessing
 
@@ -229,7 +234,7 @@ def mesh_resumes(
    - Combine all related bullet points and paragraphs from different resumes
    - Maintain chronological order within sections
 
-**Example Merging**:
+## Example Merging
 ```
 From Resume 1:
 
@@ -270,20 +275,150 @@ Computer Scientist with expertise in enterprise data architecture, implementing 
 - Mentored tech leads in shipping products within regulated technological landscape
 ```
 
-**Output**: 
+## Output
 - Generate the complete resume mesh as a valid markdown document
 - The markdown document shall optimize for LLM reading and understanding
 
-**Quality Requirements**:
+## Quality Requirements
 - Maintain professional tone and accuracy
 - Ensure no information loss from source resumes
 - Preserve specific achievements, metrics, skills and technical details
 - Use consistent formatting throughout the document
 
-**Save the resume mesh**:
+## Save the resume mesh
 - Use the MCP tool `write_file` to save the generated resume mesh
-- The file shall be saved in the directory `{resume_mesh_directory}` with the filename `{resume_mesh_filename}_{date}.md`
+- The file shall be saved in the directory `{save_directory}` with the filename `{resume_mesh_filename}_{date}.md`
 - Use the EXACT filename format: `{resume_mesh_filename}_{date}.md`
 
-**IMPORTANT**: Use the `write_file` tool to save the markdown file with the exact directory, filename and structure specified above.
+## IMPORTANT
+- Use the `write_file` tool to save the markdown file with the exact directory, filename and structure specified above.
 """
+
+
+@lru_cache(maxsize=32)
+def _sanitize_for_filename(text: str) -> str:
+    """Replace spaces and special characters with underscores, convert to lowercase.
+
+    Args:
+        text: Text to sanitize
+
+    Returns:
+        Sanitized text safe for use in filenames
+    """
+    # Replace common special characters and spaces with underscores
+    sanitized = text.lower()
+    # Replace any character that's not alphanumeric, dash, or underscore
+    sanitized = "".join(c if c.isalnum() or c in "-_" else "_" for c in sanitized)
+    # Replace multiple underscores with single underscore
+    sanitized = "_".join(part for part in sanitized.split("_") if part)
+    return sanitized
+
+
+def generate_resume_prompt(
+    save_directory: Annotated[
+        str,
+        Field(
+            description="Directory to save the resume",
+            min_length=1,
+        ),
+    ],
+    role: Annotated[str, Field(description="The role to generate a resume for")],
+    company: Annotated[
+        str, Field(description="The company to generate a resume for", min_length=1)
+    ],
+    job_description: Annotated[
+        str, Field(description="The job description to generate a resume for")
+    ],
+) -> str:
+    """
+    Generate a resume prompt for a given job title, company and job description.
+
+    Args:
+        job_title: The job title to generate a resume for
+        job_company: The company to generate a resume for
+        job_description: The job description to generate a resume for
+
+    Returns:
+        The generated resume prompt in string format
+    """
+    date = datetime.now().strftime("%Y-%m-%d")
+    safe_role = _sanitize_for_filename(role)
+    safe_company = _sanitize_for_filename(company)
+
+    resume_markdown_file = "`resume mesh markdown file`"
+
+    return f"""
+    # System Instructions for Generating a Resume
+
+    Act like a seasoned career consultant and resume expert specializing in crafting tailor-made resumes for job seekers. 
+    - You are an expert certified resume writer, and an expert in ATS (Applicant Tacking Systems). 
+    - You have a deep understanding of what hiring managers in various industries look for in candidates. 
+    - Your expertise includes transforming job descriptions into compelling CV content.
+
+    Your sole job now is to produce a Markdown resume that aligns perfectly with the `{role}` Job Description (JD) at `{company}`. 
+    **You MUST ONLY use information found in the provided `mcp resource` and in the `<job_description>`**—no outside knowledge, no invented dates, no assumptions. If the information isn't in the `mcp resource`, ask a clarifying question.
+    Job Description:
+    <job_description>
+    {job_description}
+    </job_description>
+
+    Use your extensive experience to analyze the job description, identifying key skills and qualifications required.
+    ## INSTRUCTIONS
+
+    1. Analyze the job description:
+    - Load the job description from the provided `<job_description>`.
+    - List all requirements verbatim in the following categories:
+        - Technical (languages, frameworks, tools)
+        - Hard skills
+        - Soft skills
+
+    2. Verify source scope:
+    - State: "All subsequent resume content will only be drawn from {resume_markdown_file}."
+    - If you detect a requirement not covered in resume_aggregation, STOP and ASK:
+        - "The JD requires ______ but I don't see that in resume_aggregation. Please provide or clarify."
+
+    3. Map and extract relevant information:
+    - For each JD requirement, locate matching bullet(s) or sections in {resume_markdown_file}.
+    - Copy EXACT text or very-tight abstractions—no invented metrics or projects or job duties.
+    - When selecting bullets, prefer ones that contain BOTH the required skill/keyword AND an achievement.
+
+    4. Assemble the ATS-optimized Markdown resume:
+    - CREATE a concise, clean Markdown resume.
+        - Sections, as in the {resume_markdown_file}
+    - 3 to 4 bullets each, directly lifted or minimally edited from {resume_markdown_file}.
+    - For each role, structure bullets to showcase:
+        - Required skills/keywords from JD (for ATS optimization)
+        - Related achievements when available (e.g., "Led Python development... resulting in 20% performance improvement")
+        - BALANCE between responsibilities and achievements based on what exists in the source
+    - AVOID FANCY WORDS. USE SIMPLE BUT MEANINGFUL WORDS.
+    - Education & Certs: Copy EXACTLY from {resume_markdown_file}.
+
+    5. Formatting Rules:
+    - Use EXACT keywords from the JD (for ATS alignment).
+    - Brief (LESS THAN 40 words) introductory section, IF AVAILABLE, typically labeled Introduction, Summary, About Me, Profile, or similar—used to describe the applicant at a high level.
+    - Bullets should be LESS THAN 40 words.
+    - NO superlatives or invented achievements.
+    - Use ACTIVE verbs and maintain a professional tone.
+
+    6. Self-check and audit:
+    - CONFIRM: "All content sourced 100% from {resume_markdown_file}."
+
+    7. Output:
+    - Provide ONLY the final Markdown document.
+    - If any gap appears, stop and ask a clarifying question instead of guessing.
+
+    ## QUALITY REQUIREMENTS
+    - Maintain professional tone and accuracy
+    - Ensure no information loss from source resumes
+    - Preserve specific achievements, metrics, skills and technical details
+    - Use consistent formatting throughout the document
+    - MANDATORY: ACHIEVE 90%+ on ATS requirements, technologies and skills match
+
+    ## Save the resume mesh
+    - Use the MCP tool `write_file` to save the generated resume mesh
+    - The file shall be saved in the directory `{save_directory}` with the filename `{date}_{safe_company}_{safe_role}_resume.md`
+    - Use the EXACT filename format: `{date}_{safe_company}_{safe_role}_resume.md`
+
+    ## IMPORTANT
+    - Use the `write_file` tool to save the markdown file with the exact directory, filename and structure specified above.
+    """

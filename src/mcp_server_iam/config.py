@@ -73,10 +73,10 @@ class AppConfig(BaseSettings):
     )
 
     resume_mesh_filename: str = Field(
-        default="resume_mesh.md",
+        default="resume_mesh",
         alias="RESUME_MESH_FILENAME",
         description="Default filename for resume mesh",
-        pattern=r"^[a-zA-Z0-9_\-]+\.md$",
+        pattern=r"^[a-zA-Z0-9_\-]+$",
     )
 
     # Performance settings
@@ -179,9 +179,6 @@ class AppConfig(BaseSettings):
     @classmethod
     def validate_filename(cls, v: str) -> str:
         """Validate filename format."""
-        if not v.endswith(".md"):
-            raise ValueError("Resume mesh filename must end with .md")
-
         # Check for invalid characters
         invalid_chars = ["/", "\\", ":", "*", "?", '"', "<", ">", "|"]
         if any(char in v for char in invalid_chars):
