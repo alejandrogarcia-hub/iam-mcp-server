@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch
 import pytest
 import requests
 
-from src.mcp_server_iam.tool import search_jobs
+from mcp_server_iam.tool import search_jobs
 
 
 class TestSearchJobs:
@@ -56,8 +56,8 @@ class TestSearchJobs:
 
     # ========== Happy Path Tests ==========
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_basic_success(
         self,
         mock_settings_patch,
@@ -90,9 +90,9 @@ class TestSearchJobs:
         assert "Software%20Engineer" in call_args[0][0]
         assert call_args[1]["headers"]["X-RapidAPI-Key"] == "test_api_key"
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
-    @patch("src.mcp_server_iam.tool.get_country_code")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool.get_country_code")
     def test_search_jobs_with_all_parameters(
         self,
         mock_country_code,
@@ -131,7 +131,7 @@ class TestSearchJobs:
 
     # ========== Configuration Error Tests ==========
 
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_missing_api_key(self, mock_settings_patch):
         """Test behavior when API key is missing."""
         # Arrange
@@ -146,7 +146,7 @@ class TestSearchJobs:
         assert "message" in result
         assert "RAPIDAPI_KEY" in result["message"]
 
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_missing_api_host(self, mock_settings_patch):
         """Test behavior when API host is missing."""
         # Arrange
@@ -163,7 +163,7 @@ class TestSearchJobs:
 
     # ========== Input Validation Tests ==========
 
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_city_without_country(self, mock_settings_patch, mock_settings):
         """Test validation when city is provided without country."""
         # Arrange
@@ -187,8 +187,8 @@ class TestSearchJobs:
 
     # ========== API Response Error Tests ==========
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_api_error_response(
         self, mock_settings_patch, mock_make_request, mock_settings
     ):
@@ -211,8 +211,8 @@ class TestSearchJobs:
         assert "429" in result["message"]
         # We no longer expose the raw error text for security
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_empty_results(
         self, mock_settings_patch, mock_make_request, mock_settings
     ):
@@ -235,8 +235,8 @@ class TestSearchJobs:
 
     # ========== Edge Cases and Corner Cases ==========
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_slice_description_edge_cases(
         self, mock_settings_patch, mock_make_request, mock_settings
     ):
@@ -273,8 +273,8 @@ class TestSearchJobs:
             == "This is a longer description that should be truncated"
         )
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_missing_job_fields(
         self, mock_settings_patch, mock_make_request, mock_settings
     ):
@@ -307,9 +307,9 @@ class TestSearchJobs:
         assert result[0]["description"] == ""
         assert result[0]["apply_link"] == "Not provided"
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
-    @patch("tool.get_country_code")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool.get_country_code")
     def test_search_jobs_country_code_not_found(
         self,
         mock_country_code,
@@ -336,8 +336,8 @@ class TestSearchJobs:
 
     # ========== Security Tests ==========
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_sql_injection_attempt(
         self,
         mock_settings_patch,
@@ -364,8 +364,8 @@ class TestSearchJobs:
             "Engineer%27%3B%20DROP%20TABLE%20jobs%3B%20--" in called_url
         )  # Should be encoded
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_xss_in_response(
         self, mock_settings_patch, mock_make_request, mock_settings
     ):
@@ -397,8 +397,8 @@ class TestSearchJobs:
 
     # ========== Network Error Tests ==========
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_connection_error(
         self, mock_settings_patch, mock_make_request, mock_settings
     ):
@@ -421,8 +421,8 @@ class TestSearchJobs:
             == "Unable to connect to job search service. Please try again later."
         )
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_timeout_error(
         self, mock_settings_patch, mock_make_request, mock_settings
     ):
@@ -440,8 +440,8 @@ class TestSearchJobs:
         assert isinstance(result, dict)
         assert result["message"] == "Job search request timed out. Please try again."
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_invalid_json_response(
         self, mock_settings_patch, mock_make_request, mock_settings
     ):
@@ -462,8 +462,8 @@ class TestSearchJobs:
         assert isinstance(result, dict)
         assert result["message"] == "Invalid response format from job search API"
 
-    @patch("src.mcp_server_iam.tool.requests.get")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool.requests.get")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_retry_on_timeout(
         self,
         mock_settings_patch,
@@ -491,8 +491,8 @@ class TestSearchJobs:
         # Verify it was called 3 times (2 retries + 1 success)
         assert mock_requests_get.call_count == 3
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_url_encoding(
         self,
         mock_settings_patch,
@@ -524,8 +524,8 @@ class TestSearchJobs:
 
     # ========== Platform Validation Tests ==========
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_empty_platform_string(
         self,
         mock_settings_patch,
@@ -550,8 +550,8 @@ class TestSearchJobs:
 
     # ========== Description Slicing Logic Tests ==========
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_description_not_string(
         self, mock_settings_patch, mock_make_request, mock_settings
     ):
@@ -590,8 +590,8 @@ class TestSearchJobs:
 class TestSearchJobsIntegration:
     """Integration-style tests that verify the function works with real-like data."""
 
-    @patch("src.mcp_server_iam.tool._make_request")
-    @patch("src.mcp_server_iam.tool.settings")
+    @patch("mcp_server_iam.tool._make_request")
+    @patch("mcp_server_iam.tool.settings")
     def test_search_jobs_realistic_scenario(
         self, mock_settings_patch, mock_make_request
     ):

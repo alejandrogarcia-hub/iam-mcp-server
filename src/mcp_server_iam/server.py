@@ -1,14 +1,15 @@
 from datetime import datetime
 from typing import Annotated, Literal
 
-from config import settings
 from mcp.server.fastmcp import FastMCP
-from prompt import analyze_job_market as analyze_job_market_prompt
-from prompt import generate_cover_letter_prompt, generate_resume_prompt
-from prompt import mesh_resumes as mesh_resumes_prompt
-from prompt import save_jobs as save_jobs_prompt
 from pydantic import Field
-from tool import search_jobs as search_jobs_impl
+
+from mcp_server_iam.config import settings
+from mcp_server_iam.prompt import analyze_job_market as analyze_job_market_prompt
+from mcp_server_iam.prompt import generate_cover_letter_prompt, generate_resume_prompt
+from mcp_server_iam.prompt import mesh_resumes as mesh_resumes_prompt
+from mcp_server_iam.prompt import save_jobs as save_jobs_prompt
+from mcp_server_iam.tool import search_jobs as search_jobs_impl
 
 mcp = FastMCP(
     name=settings.app_name,

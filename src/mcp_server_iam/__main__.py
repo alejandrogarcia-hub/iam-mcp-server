@@ -1,7 +1,11 @@
 # src/mcp_server_iam/__main__.py
-from config import settings
-from server import mcp
+from mcp_server_iam.config import settings
+from mcp_server_iam.server import mcp
+
+
+def main():
+    mcp.run(transport=settings.transport)  # starts stdio server; blocks until exit
+
 
 if __name__ == "__main__":
-    # Optionally parse CLI flags here before launch
-    mcp.run(transport=settings.transport)  # starts stdio server; blocks until exit
+    main()

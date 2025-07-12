@@ -2,7 +2,6 @@ from typing import Annotated, Literal
 from urllib.parse import quote
 
 import requests
-from config import settings
 from pydantic import Field
 from requests.exceptions import ConnectionError, RequestException, Timeout
 from tenacity import (
@@ -11,7 +10,9 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
-from utils import get_country_code
+
+from mcp_server_iam.config import settings
+from mcp_server_iam.utils import get_country_code
 
 
 @retry(

@@ -66,12 +66,18 @@ Performs a job search using the following parameters:
    - **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
    - **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
+#### Option 1: Using `uvx` with PyPI package
+
 ```json
 {
   "mcpServers": {
     "iam": {
         "command": "uvx",
-        "args": ["mcp-server-iam"],
+        "args": [
+            "--from", 
+            "iam-mcp-server@latest",
+            "mcp-server-iam"
+        ],
         "env": {
             "LOG_LEVEL": "INFO",
             "RAPIDAPI_KEY": "<API KEY>",
@@ -82,7 +88,7 @@ Performs a job search using the following parameters:
 }
 ```
 
-or, if you have the source code
+#### Option 2: Using source code
 
 ```json
 {
