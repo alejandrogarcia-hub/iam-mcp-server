@@ -79,28 +79,6 @@ class AppConfig(BaseSettings):
         pattern=r"^[a-zA-Z0-9_\-]+$",
     )
 
-    # Performance settings
-    max_file_size: int = Field(
-        default=10 * 1024 * 1024,  # 10MB
-        alias="MAX_FILE_SIZE",
-        description="Maximum file size for uploads in bytes",
-        gt=0,
-    )
-
-    # Cache settings
-    enable_caching: bool = Field(
-        default=True,
-        alias="ENABLE_CACHING",
-        description="Enable caching for frequently accessed data",
-    )
-
-    cache_ttl: int = Field(
-        default=300,  # 5 minutes
-        alias="CACHE_TTL",
-        description="Cache time-to-live in seconds",
-        gt=0,
-    )
-
     rapidapi_key: str | None = Field(
         default="",
         alias="RAPIDAPI_KEY",
