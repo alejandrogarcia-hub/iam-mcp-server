@@ -181,7 +181,7 @@ After saving, confirm:
 - File size is reasonable (not empty or corrupted)
 
 ## IMPORTANT
-- Use the `write_file` tool to create the JSON file with the exact filename and structure specified above.
+- Use the `write_file` tool to write the JSON file with the exact filename and structure specified above.
 """
 
 
