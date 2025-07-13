@@ -1,0 +1,212 @@
+name: Release to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - patch
+          - minor
+          - major
+      dry_run:
+        description: 'Dry run (do not publish)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  id-token: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Release Package
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/iam-mcp-server/
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        version: "latest"
+        enable-cache: true
+        
+    - name: Install dependencies
+      run: |
+        uv sync --all-extras --dev
+        uv add --dev python-semantic-release
+        
+    - name: Configure Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
+    - name: Get current version
+      id: current_version
+      run: |
+        CURRENT_VERSION=$(uv run python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+        echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+        echo "Current version: $CURRENT_VERSION"
+        
+    - name: Determine next version (auto mode)
+      if: inputs.version_bump == 'auto'
+      id: auto_version
+      run: |
+        echo "Using semantic-release to determine version bump..."
+        NEXT_VERSION=$(uv run semantic-release --noop version --print 2>/dev/null | tail -1 || echo "")
+        if [ -z "$NEXT_VERSION" ] || [ "$NEXT_VERSION" = "${{ steps.current_version.outputs.current }}" ]; then
+          echo "No version bump needed based on commits"
+          echo "next=none" >> $GITHUB_OUTPUT
+        else
+          echo "next=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "Next version: $NEXT_VERSION"
+        fi
+        
+    - name: Determine next version (manual mode)
+      if: inputs.version_bump != 'auto'
+      id: manual_version
+      run: |
+        BUMP_TYPE="${{ inputs.version_bump }}"
+        echo "Manual version bump: $BUMP_TYPE"
+        NEXT_VERSION=$(uv run semantic-release --noop version --force-level=$BUMP_TYPE --print 2>/dev/null | tail -1)
+        echo "next=$NEXT_VERSION" >> $GITHUB_OUTPUT
+        echo "Next version: $NEXT_VERSION"
+        
+    - name: Check if release needed
+      id: check_release
+      run: |
+        if [ "${{ inputs.version_bump }}" = "auto" ]; then
+          NEXT_VERSION="${{ steps.auto_version.outputs.next }}"
+        else
+          NEXT_VERSION="${{ steps.manual_version.outputs.next }}"
+        fi
+        
+        if [ "$NEXT_VERSION" = "none" ] || [ -z "$NEXT_VERSION" ]; then
+          echo "No release needed"
+          echo "needed=false" >> $GITHUB_OUTPUT
+        else
+          echo "Release needed: $NEXT_VERSION"
+          echo "needed=true" >> $GITHUB_OUTPUT
+          echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Stop if no release needed
+      if: steps.check_release.outputs.needed == 'false'
+      run: |
+        echo "::notice::No version bump required based on commit history"
+        exit 0
+        
+    - name: Run tests before release
+      if: steps.check_release.outputs.needed == 'true'
+      run: |
+        echo "Running full test suite before release..."
+        make pipeline
+        
+    - name: Verify no uncommitted changes
+      if: steps.check_release.outputs.needed == 'true'
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "Error: Uncommitted changes after running tests"
+          git status --porcelain
+          exit 1
+        fi
+        
+    - name: Bump version and create tag
+      if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
+      run: |
+        if [ "${{ inputs.version_bump }}" = "auto" ]; then
+          uv run semantic-release version --no-push --no-commit
+        else
+          uv run semantic-release version --no-push --no-commit --force-level=${{ inputs.version_bump }}
+        fi
+        
+    - name: Build package
+      if: steps.check_release.outputs.needed == 'true'
+      run: |
+        echo "Building package..."
+        uv build
+        
+    - name: Check package
+      if: steps.check_release.outputs.needed == 'true'
+      run: |
+        echo "Checking package integrity..."
+        uv run twine check dist/*
+        
+    - name: Test install package
+      if: steps.check_release.outputs.needed == 'true'
+      run: |
+        echo "Testing package installation..."
+        uv run pip install dist/*.whl
+        uv run python -c "import mcp_server_iam; print('Package imported successfully')"
+        
+    - name: Dry run summary
+      if: steps.check_release.outputs.needed == 'true' && inputs.dry_run
+      run: |
+        echo "::notice::DRY RUN COMPLETE"
+        echo "::notice::Would release version: ${{ steps.check_release.outputs.version }}"
+        echo "::notice::Package built successfully and passed all checks"
+        ls -la dist/
+        
+    - name: Publish to PyPI
+      if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        verbose: true
+        attestations: true
+        
+    - name: Push version commit and tag
+      if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
+      run: |
+        git push origin main
+        git push origin --tags
+        
+    - name: Create GitHub Release
+      if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.check_release.outputs.version }}
+        release_name: Release v${{ steps.check_release.outputs.version }}
+        body: |
+          Release v${{ steps.check_release.outputs.version }}
+          
+          ## Changes
+          This release was automatically generated based on commit history.
+          
+          ## Installation
+          ```bash
+          pip install iam-mcp-server==${{ steps.check_release.outputs.version }}
+          ```
+          
+          Or with uvx:
+          ```bash
+          uvx --from iam-mcp-server@${{ steps.check_release.outputs.version }} mcp-server-iam
+          ```
+        draft: false
+        prerelease: false
+        
+    - name: Success summary
+      if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
+      run: |
+        echo "::notice::Successfully released version ${{ steps.check_release.outputs.version }}"
+        echo "::notice::Package available at: https://pypi.org/project/iam-mcp-server/${{ steps.check_release.outputs.version }}/"

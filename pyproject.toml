@@ -64,3 +64,33 @@ required-version = ">=0.7.19"
 vcs = "git"
 style = "pep440"
 bump = true
+
+[tool.semantic_release]
+# Version management
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["src/mcp_server_iam/__init__.py:__version__"]
+
+# Branch configuration
+branch = "main"
+
+# Release settings
+major_on_zero = false  # Since you're already at 1.x.x
+allow_zero_version = false
+
+# Commit parsing - Angular convention
+commit_parser = "angular"
+commit_parser_options = { parse_squash_commits = true, ignore_merge_commits = true }
+
+# Build configuration
+build_command = "uv build"
+
+# Publishing settings
+upload_to_pypi = false  # We handle PyPI upload in GitHub Actions
+upload_to_release = false  # We handle GitHub releases in Actions
+
+# Commit message for version bumps
+commit_message = "chore(release): {version} [skip ci]"
+tag_format = "v{version}"
+
+# Changelog generation
+changelog = { exclude_commit_patterns = ["chore\\(release\\):.*"] }
