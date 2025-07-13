@@ -21,7 +21,7 @@ on:
 
 permissions:
   contents: write
-  id-token: write
+  id-token: write  # CRITICAL: Required for trusted publishing
   pull-requests: write
 
 jobs:
@@ -59,10 +59,11 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-    - name: Get current version
+    - name: Get current version from git tags
       id: current_version
       run: |
-        CURRENT_VERSION=$(uv run python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+        # Get the latest git tag, fallback to 0.0.0 if no tags exist
+        CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.0.0")
         echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
         echo "Current version: $CURRENT_VERSION"
         
@@ -106,6 +107,7 @@ jobs:
           echo "Release needed: $NEXT_VERSION"
           echo "needed=true" >> $GITHUB_OUTPUT
           echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "tag_name=v$NEXT_VERSION" >> $GITHUB_OUTPUT
         fi
         
     - name: Stop if no release needed
@@ -129,22 +131,30 @@ jobs:
           exit 1
         fi
         
-    - name: Bump version files only
-      if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
+    - name: Pre-validate build (dry run)
+      if: steps.check_release.outputs.needed == 'true'
       run: |
-        if [ "${{ inputs.version_bump }}" = "auto" ]; then
-          uv run semantic-release version --no-push --no-commit
-        else
-          uv run semantic-release version --no-push --no-commit --force-level=${{ inputs.version_bump }}
-        fi
+        echo "Pre-validating build without git tag..."
+        uv build
+        uv run twine check dist/*
+        echo "Build validation successful"
+        rm -rf dist/  # Clean up pre-validation artifacts
         
-    - name: Get final version for tagging
+    - name: Create and push git tag
       if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
-      id: final_version
+      id: create_tag
       run: |
-        FINAL_VERSION=$(uv run python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
-        echo "version=$FINAL_VERSION" >> $GITHUB_OUTPUT
-        echo "Final version: $FINAL_VERSION"
+        TAG_NAME="${{ steps.check_release.outputs.tag_name }}"
+        
+        # Create the release tag
+        git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+        
+        # Push the tag only (no version commit needed)
+        git push origin "$TAG_NAME"
+        
+        # Mark that we created the tag for cleanup purposes
+        echo "created=true" >> $GITHUB_OUTPUT
+        echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
         
     - name: Build package
       if: steps.check_release.outputs.needed == 'true'
@@ -173,28 +183,10 @@ jobs:
         echo "::notice::Package built successfully and passed all checks"
         ls -la dist/
         
-    - name: Commit version changes
-      if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
-      run: |
-        git add pyproject.toml src/mcp_server_iam/__init__.py
-        git commit -m "chore(release): ${{ steps.final_version.outputs.version }} [skip ci]"
-        
-    - name: Create and push git tag
-      if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
-      run: |
-        TAG_NAME="v${{ steps.final_version.outputs.version }}"
-        
-        # Create the release tag
-        git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
-        
-        # Push the commit and tag
-        git push origin main
-        git push origin "$TAG_NAME"
-        
     - name: Check PyPI package doesn't exist
       if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
       run: |
-        VERSION="${{ steps.final_version.outputs.version }}"
+        VERSION="${{ steps.check_release.outputs.version }}"
         echo "Checking if iam-mcp-server==$VERSION already exists on PyPI..."
         
         # Check if this version exists on PyPI
@@ -215,27 +207,28 @@ jobs:
         verbose: true
         attestations: true
         skip-existing: false  # Fail if package already exists
+        # No username/password needed - uses OIDC trusted publishing
         
     - name: Create GitHub Release
       if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v${{ steps.final_version.outputs.version }}
-        name: Release v${{ steps.final_version.outputs.version }}
+        tag_name: ${{ steps.check_release.outputs.tag_name }}
+        name: Release ${{ steps.check_release.outputs.tag_name }}
         body: |
-          Release v${{ steps.final_version.outputs.version }}
+          Release ${{ steps.check_release.outputs.tag_name }}
           
           ## Changes
           This release was automatically generated based on commit history.
           
           ## Installation
           ```bash
-          pip install iam-mcp-server==${{ steps.final_version.outputs.version }}
+          pip install iam-mcp-server==${{ steps.check_release.outputs.version }}
           ```
           
           Or with uvx:
           ```bash
-          uvx --from iam-mcp-server@${{ steps.final_version.outputs.version }} mcp-server-iam
+          uvx --from iam-mcp-server@${{ steps.check_release.outputs.version }} mcp-server-iam
           ```
         draft: false
         prerelease: false
@@ -243,15 +236,35 @@ jobs:
     - name: Success summary
       if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
       run: |
-        echo "::notice::✅ Successfully released version ${{ steps.final_version.outputs.version }}"
-        echo "::notice::📦 Package available at: https://pypi.org/project/iam-mcp-server/${{ steps.final_version.outputs.version }}/"
-        echo "::notice::🏷️ Git tag created: v${{ steps.final_version.outputs.version }}"
-        echo "::notice::🚀 GitHub release created: https://github.com/alejandrogarcia-hub/iam-mcp-server/releases/tag/v${{ steps.final_version.outputs.version }}"
+        echo "::notice::✅ Successfully released version ${{ steps.check_release.outputs.version }}"
+        echo "::notice::📦 Package available at: https://pypi.org/project/iam-mcp-server/${{ steps.check_release.outputs.version }}/"
+        echo "::notice::🏷️ Git tag created: ${{ steps.check_release.outputs.tag_name }}"
+        echo "::notice::🚀 GitHub release created: https://github.com/alejandrogarcia-hub/iam-mcp-server/releases/tag/${{ steps.check_release.outputs.tag_name }}"
+        
+    # CLEANUP: Remove git tag if workflow fails after tag creation
+    - name: Cleanup git tag on failure
+      if: failure() && steps.create_tag.outputs.created == 'true' && !inputs.dry_run
+      run: |
+        TAG_NAME="${{ steps.create_tag.outputs.tag_name }}"
+        echo "::warning::Workflow failed after creating tag $TAG_NAME"
+        echo "::notice::Cleaning up: removing git tag $TAG_NAME"
+        
+        # Remove local tag
+        git tag -d "$TAG_NAME" 2>/dev/null || true
+        
+        # Remove remote tag
+        git push origin --delete "$TAG_NAME" 2>/dev/null || true
+        
+        echo "::notice::✅ Git tag $TAG_NAME removed successfully"
+        echo "::notice::You can safely re-run the workflow"
         
     - name: Failure cleanup instructions
       if: failure() && steps.check_release.outputs.needed == 'true' && !inputs.dry_run
       run: |
         echo "::error::❌ Release workflow failed!"
+        if [ "${{ steps.create_tag.outputs.created }}" = "true" ]; then
+          echo "::notice::🧹 Git tag cleanup attempted automatically"
+        fi
         echo "::notice::If PyPI package was published but git operations failed:"
         echo "::notice::1. Check PyPI: https://pypi.org/project/iam-mcp-server/"
         echo "::notice::2. Check git tags: git tag -l 'v*'"

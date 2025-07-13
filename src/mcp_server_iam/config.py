@@ -50,13 +50,6 @@ class AppConfig(BaseSettings):
         max_length=50,
     )
 
-    app_version: str = Field(
-        default="1.0.0",
-        alias="APP_VERSION",
-        description="Application version for MCP server and logging",
-        pattern=r"^\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?$",
-    )
-
     log_level: int = Field(
         default=logging.INFO,
         description="Logging level, default info",
@@ -104,26 +97,6 @@ class AppConfig(BaseSettings):
         if not cleaned:
             raise ValueError(
                 "App name must contain at least one alphanumeric character"
-            )
-
-        return cleaned
-
-    @field_validator("app_version", mode="before")
-    @classmethod
-    def validate_app_version(cls, v: str) -> str:
-        """Validate semantic version format."""
-        if not v or not v.strip():
-            return "1.0.0"  # Default fallback
-
-        # Clean up the input
-        cleaned = v.strip()
-
-        # Basic validation for semantic versioning
-        import re
-
-        if not re.match(r"^\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?$", cleaned):
-            raise ValueError(
-                f"Invalid version format: {cleaned}. Expected format: X.Y.Z or X.Y.Z-suffix"
             )
 
         return cleaned

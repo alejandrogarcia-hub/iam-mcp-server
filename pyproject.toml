@@ -1,23 +1,22 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-# Tell Hatch we’re using a src layout
+# Tell Hatch we're using a src layout
 sources = ["src"]
 
 [tool.hatch.build.targets.wheel]
 # Point to the real package directory
-packages = ["src/mcp_server_iam"]
+packages = ["mcp_server_iam"]
 
 [project.scripts]
 # Point to the real module path
 mcp-server-iam = "mcp_server_iam.__main__:main"
 
-
 [project]
 name = "iam-mcp-server"
-version = "1.1.4"
+dynamic = ["version"]
 description = "Individual Application Mesh, MCP Server"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -66,21 +65,18 @@ resolution = "highest"
 default-groups = ["dev"]
 required-version = ">=0.7.19"
 
-[tool.uv-dynamic-versioning]
-vcs = "git"
-style = "pep440"
-bump = true
+[tool.hatch.version]
+source = "vcs"
 
 [tool.semantic_release]
-# Version management
-version_toml = ["pyproject.toml:project.version"]
-version_variables = ["src/mcp_server_iam/__init__.py:__version__"]
+# Version management - Let semantic-release handle git tags only
+# No file-based version updates since we use VCS-based versioning
 
 # Branch configuration
 branch = "main"
 
 # Release settings
-major_on_zero = false      # Since you're already at 1.x.x
+major_on_zero = false
 allow_zero_version = false
 
 # Commit parsing - Angular convention
@@ -94,9 +90,9 @@ build_command = "uv build"
 upload_to_pypi = false    # We handle PyPI upload in GitHub Actions
 upload_to_release = false # We handle GitHub releases in Actions
 
-# Commit message for version bumps
-commit_message = "chore(release): {version} [skip ci]"
+# Git tag settings (no version file updates)
 tag_format = "v{version}"
+commit_message = "chore(release): {version} [skip ci]"
 
 # Changelog generation
 changelog = { exclude_commit_patterns = ["chore\\(release\\):.*"] }
