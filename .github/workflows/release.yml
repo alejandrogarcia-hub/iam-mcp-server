@@ -171,9 +171,17 @@ jobs:
     - name: Test install package
       if: steps.check_release.outputs.needed == 'true'
       run: |
-        echo "Testing package installation..."
-        uv run pip install dist/*.whl
-        uv run python -c "import mcp_server_iam; print('Package imported successfully')"
+        echo "Testing package installation in fresh environment..."
+        # Create a temporary virtual environment for testing
+        python -m venv /tmp/test_env
+        source /tmp/test_env/bin/activate
+        pip install dist/*.whl
+        python -c "import mcp_server_iam; print('Package imported successfully')"
+        python -c "from mcp_server_iam import __version__; print(f'Package version: {__version__}')"
+        # Test entry point
+        which mcp-server-iam
+        deactivate
+        rm -rf /tmp/test_env
         
     - name: Dry run summary
       if: steps.check_release.outputs.needed == 'true' && inputs.dry_run
