@@ -1,11 +1,29 @@
 # IAM MCP SERVER ... kind of 🤔
 
-Individual Applicant Mesh MCP Server, server for processing and managing applicant resumes, and search for jobs. This server provides tools and prompts for job search, resume aggregation, job-specific resume, and cover letter, generation.</br>
-Indeed, is not really solving any integration but providing specific functionaliy for a MCP host, therefore, the `kinf of 🤔`.
+The Individual Applicant Mesh (IAM) MCP Server is designed to process and manage applicant resumes, as well as facilitate job searches. It offers specialized tools and prompts for job searching, resume aggregation, generating job-specific resumes, and creating tailored cover letters.
+
+Note: This server does not fully handle system integrations. Instead, it provides focused functionality specifically for an MCP host—hence the "kind of 🤔" in the name.
 
 ## 📝 Requirements
 
 1. 🗂️ The MCP host must have read and write access to the local file system where it is running. For example, you can run the `IAM MCP Server` within `Claude Desktop`, alongside the `filesystem` MCP Server, which provides this capability. This file access requirement applies to version `1.0` and is necessary for proper operation.
+
+   1.1. Add the `filesystem` MCP server
+
+```json
+    {
+        "mcpServers": {
+            "filesystem": {
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "@modelcontextprotocol/server-filesystem",
+                    "<add directory for filesystem server>"
+                ]
+            }
+        }
+    }
+```
 
 2. 🔍 The `search job` MCP tool requires access to [JSearch](https://rapidapi.com/letscrape-6bRBa3QguO5/api/JSearch). You can create an account and get 200 requests per month for free.
 
