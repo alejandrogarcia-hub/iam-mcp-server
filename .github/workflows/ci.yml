@@ -1,0 +1,53 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate:
+    name: Validate Code
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        version: "latest"
+        enable-cache: true
+        
+    - name: Set up Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
+      
+    - name: Install dependencies
+      run: |
+        uv sync --all-extras --dev
+        
+    - name: Run pipeline
+      run: make pipeline
+      
+    - name: Upload test coverage
+      if: matrix.python-version == '3.11'
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-coverage
+        path: .coverage
+        retention-days: 7
+        
+    - name: Check for uncommitted changes
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "Error: Uncommitted changes found after running pipeline"
+          echo "Please run 'make pipeline' locally and commit the changes"
+          git status --porcelain
+          exit 1
+        fi
