@@ -130,7 +130,7 @@ jobs:
           exit 1
         fi
         
-    - name: Bump version and create tag
+    - name: Bump version and update files
       if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
       run: |
         if [ "${{ inputs.version_bump }}" = "auto" ]; then
@@ -138,6 +138,14 @@ jobs:
         else
           uv run semantic-release version --no-push --no-commit --force-level=${{ inputs.version_bump }}
         fi
+        
+    - name: Get final version for tagging
+      if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
+      id: final_version
+      run: |
+        FINAL_VERSION=$(uv run python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+        echo "version=$FINAL_VERSION" >> $GITHUB_OUTPUT
+        echo "Final version: $FINAL_VERSION"
         
     - name: Build package
       if: steps.check_release.outputs.needed == 'true'
@@ -173,11 +181,18 @@ jobs:
         verbose: true
         attestations: true
         
-    - name: Push version commit and tag
+    - name: Commit version changes
       if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
       run: |
+        git add pyproject.toml src/mcp_server_iam/__init__.py
+        git commit -m "chore(release): ${{ steps.final_version.outputs.version }} [skip ci]"
+        
+    - name: Create and push git tag
+      if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
+      run: |
+        git tag -a "v${{ steps.final_version.outputs.version }}" -m "Release v${{ steps.final_version.outputs.version }}"
         git push origin main
-        git push origin --tags
+        git push origin "v${{ steps.final_version.outputs.version }}"
         
     - name: Create GitHub Release
       if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
@@ -185,22 +200,22 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v${{ steps.check_release.outputs.version }}
-        release_name: Release v${{ steps.check_release.outputs.version }}
+        tag_name: v${{ steps.final_version.outputs.version }}
+        release_name: Release v${{ steps.final_version.outputs.version }}
         body: |
-          Release v${{ steps.check_release.outputs.version }}
+          Release v${{ steps.final_version.outputs.version }}
           
           ## Changes
           This release was automatically generated based on commit history.
           
           ## Installation
           ```bash
-          pip install iam-mcp-server==${{ steps.check_release.outputs.version }}
+          pip install iam-mcp-server==${{ steps.final_version.outputs.version }}
           ```
           
           Or with uvx:
           ```bash
-          uvx --from iam-mcp-server@${{ steps.check_release.outputs.version }} mcp-server-iam
+          uvx --from iam-mcp-server@${{ steps.final_version.outputs.version }} mcp-server-iam
           ```
         draft: false
         prerelease: false
@@ -208,5 +223,7 @@ jobs:
     - name: Success summary
       if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
       run: |
-        echo "::notice::Successfully released version ${{ steps.check_release.outputs.version }}"
-        echo "::notice::Package available at: https://pypi.org/project/iam-mcp-server/${{ steps.check_release.outputs.version }}/"
+        echo "::notice::Successfully released version ${{ steps.final_version.outputs.version }}"
+        echo "::notice::Package available at: https://pypi.org/project/iam-mcp-server/${{ steps.final_version.outputs.version }}/"
+        echo "::notice::Git tag created: v${{ steps.final_version.outputs.version }}"
+        echo "::notice::GitHub release created: https://github.com/alejandrogarcia-hub/iam-mcp-server/releases/tag/v${{ steps.final_version.outputs.version }}"
