@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 sources = ["src"]
 
 [tool.hatch.build.targets.wheel]
-# Point to the real package directory
+# Explicitly specify the package name for src layout
 packages = ["mcp_server_iam"]
 
 [project.scripts]
