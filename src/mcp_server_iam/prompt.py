@@ -96,8 +96,14 @@ def save_jobs(
     jobs_dir: Annotated[str, Field(description="Directory to save jobs")],
     date: Annotated[str, Field(description="Date of the job search")],
     role: Annotated[str, Field(description="Role of the job search")],
-    city: Annotated[str, Field(description="City of the job search")],
     n_jobs: Annotated[int, Field(description="Number of jobs to save")],
+    city: Annotated[
+        str | None,
+        Field(description="Target city for job search"),
+    ] = None,
+    country: Annotated[
+        str | None, Field(description="Target country for market analysis")
+    ] = None,
 ) -> str:
     """
     Generate instructions for saving job search results to a JSON file.
@@ -109,8 +115,9 @@ def save_jobs(
         jobs_dir: Target directory path for saving the job file
         date: Date when the job search was performed (YYYY-MM-DD format)
         role: Job role/title that was searched for
-        city: City/location that was searched in
         n_jobs: Number of job results to save
+        city: City/location that was searched in
+        country: Country/location that was searched in
 
     Returns:
         str: Formatted prompt with detailed instructions for the LLM to save
@@ -118,9 +125,27 @@ def save_jobs(
     """
     # Sanitize inputs for safe filename generation
     safe_role = "".join(c for c in role if c.isalnum() or c in (" ", "-", "_")).strip()
-    safe_city = "".join(c for c in city if c.isalnum() or c in (" ", "-", "_")).strip()
     safe_role = safe_role.replace(" ", "_")
-    safe_city = safe_city.replace(" ", "_")
+
+    # Build filename parts dynamically based on what's provided
+    filename_parts = [date, safe_role]
+
+    if city:
+        safe_city = "".join(
+            c for c in city if c.isalnum() or c in (" ", "-", "_")
+        ).strip()
+        safe_city = safe_city.replace(" ", "_")
+        filename_parts.append(safe_city)
+
+    if country:
+        safe_country = "".join(
+            c for c in country if c.isalnum() or c in (" ", "-", "_")
+        ).strip()
+        safe_country = safe_country.replace(" ", "_")
+        filename_parts.append(safe_country)
+
+    filename_parts.append(str(n_jobs))
+    filename = "_".join(filename_parts) + ".json"
 
     return f"""
 # System Instructions for Saving Job Search Results
@@ -129,7 +154,7 @@ You are tasked with saving job search results to a structured JSON file. Follow 
 
 ## File Location and Naming
 - **Directory**: Save to `{jobs_dir}` directory
-- **Filename**: `{date}_{safe_role}_{safe_city}_{n_jobs}.json`
+- **Filename**: `{filename}`
 - **Format**: JSON array containing job objects
 
 ## Required JSON Structure
@@ -149,6 +174,7 @@ Each job must be saved with this exact structure:
     "search_criteria": {{
       "role": "{role}",
       "city": "{city}",
+      "country": "{country}",
       "date_searched": "{date}"
     }}
   }}
@@ -158,7 +184,7 @@ Each job must be saved with this exact structure:
 ## Critical Instructions
 
 1. **Create the directory** `{jobs_dir}` if it doesn't exist
-2. **Use the EXACT filename format**: `{date}_{safe_role}_{safe_city}_{n_jobs}.json`
+2. **Use the EXACT filename format**: `{filename}`
 3. **Ensure valid JSON**: 
    - Proper escaping of quotes and special characters
    - No trailing commas

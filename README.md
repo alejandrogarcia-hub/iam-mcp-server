@@ -60,6 +60,8 @@ Performs a job search using the following parameters:
 
 ## 🛠️ Installation & Setup
 
+You can easily install this project as a Python package from PyPI: [iam-mcp-server](https://pypi.org/project/iam-mcp-server/).
+
 ### 🖥️ MCP host (Claude Desktop)
 
 1. Locate your `claude_desktop_config.json` file:

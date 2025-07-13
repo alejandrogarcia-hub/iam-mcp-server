@@ -17,7 +17,7 @@ mcp-server-iam = "mcp_server_iam.__main__:main"
 
 [project]
 name = "iam-mcp-server"
-version = "1.1.3"
+version = "1.1.4"
 description = "Individual Application Mesh, MCP Server"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -28,6 +28,13 @@ license = { text = "MIT" }
 authors = [{ name = "Alejandro Garcia" }]
 maintainers = [
     { name = "Alejandro Garcia", email = "github_dev.chowder574@passmail.net" },
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
 ]
 
 dependencies = [
