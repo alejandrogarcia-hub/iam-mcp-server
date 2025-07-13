@@ -10,20 +10,20 @@ Note: This server does not fully handle system integrations. Instead, it provide
 
    1.1. Add the `filesystem` MCP server
 
-```json
-    {
-        "mcpServers": {
-            "filesystem": {
-                "command": "npx",
-                "args": [
-                    "-y",
-                    "@modelcontextprotocol/server-filesystem",
-                    "<add directory for filesystem server>"
-                ]
+    ```json
+        {
+            "mcpServers": {
+                "filesystem": {
+                    "command": "npx",
+                    "args": [
+                        "-y",
+                        "@modelcontextprotocol/server-filesystem",
+                        "<add directory for filesystem server>"
+                    ]
+                }
             }
         }
-    }
-```
+    ```
 
 2. 🔍 The `search job` MCP tool requires access to [JSearch](https://rapidapi.com/letscrape-6bRBa3QguO5/api/JSearch). You can create an account and get 200 requests per month for free.
 
