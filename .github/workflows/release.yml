@@ -173,13 +173,6 @@ jobs:
         echo "::notice::Package built successfully and passed all checks"
         ls -la dist/
         
-    - name: Publish to PyPI
-      if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        verbose: true
-        attestations: true
-        
     - name: Commit version changes
       if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
       run: |
@@ -197,6 +190,31 @@ jobs:
         # Push the commit and tag
         git push origin main
         git push origin "$TAG_NAME"
+        
+    - name: Check PyPI package doesn't exist
+      if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
+      run: |
+        VERSION="${{ steps.final_version.outputs.version }}"
+        echo "Checking if iam-mcp-server==$VERSION already exists on PyPI..."
+        
+        # Check if this version exists on PyPI
+        if pip index versions iam-mcp-server | grep -q "$VERSION"; then
+          echo "ERROR: Package iam-mcp-server==$VERSION already exists on PyPI"
+          echo "This indicates a previous partial release. Please:"
+          echo "1. Check PyPI: https://pypi.org/project/iam-mcp-server/"
+          echo "2. Verify git tags are in sync"
+          echo "3. If needed, increment version manually"
+          exit 1
+        fi
+        echo "Version $VERSION not found on PyPI, safe to proceed"
+        
+    - name: Publish to PyPI
+      if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        verbose: true
+        attestations: true
+        skip-existing: false  # Fail if package already exists
         
     - name: Create GitHub Release
       if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
@@ -225,7 +243,17 @@ jobs:
     - name: Success summary
       if: steps.check_release.outputs.needed == 'true' && !inputs.dry_run
       run: |
-        echo "::notice::Successfully released version ${{ steps.final_version.outputs.version }}"
-        echo "::notice::Package available at: https://pypi.org/project/iam-mcp-server/${{ steps.final_version.outputs.version }}/"
-        echo "::notice::Git tag created: v${{ steps.final_version.outputs.version }}"
-        echo "::notice::GitHub release created: https://github.com/alejandrogarcia-hub/iam-mcp-server/releases/tag/v${{ steps.final_version.outputs.version }}"
+        echo "::notice::✅ Successfully released version ${{ steps.final_version.outputs.version }}"
+        echo "::notice::📦 Package available at: https://pypi.org/project/iam-mcp-server/${{ steps.final_version.outputs.version }}/"
+        echo "::notice::🏷️ Git tag created: v${{ steps.final_version.outputs.version }}"
+        echo "::notice::🚀 GitHub release created: https://github.com/alejandrogarcia-hub/iam-mcp-server/releases/tag/v${{ steps.final_version.outputs.version }}"
+        
+    - name: Failure cleanup instructions
+      if: failure() && steps.check_release.outputs.needed == 'true' && !inputs.dry_run
+      run: |
+        echo "::error::❌ Release workflow failed!"
+        echo "::notice::If PyPI package was published but git operations failed:"
+        echo "::notice::1. Check PyPI: https://pypi.org/project/iam-mcp-server/"
+        echo "::notice::2. Check git tags: git tag -l 'v*'"
+        echo "::notice::3. Manual cleanup may be required before next release"
+        echo "::notice::4. Contact maintainer if unsure about state"
