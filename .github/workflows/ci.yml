@@ -34,14 +34,6 @@ jobs:
         
     - name: Run pipeline
       run: make pipeline
-      
-    - name: Upload test coverage
-      if: matrix.python-version == '3.11'
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-coverage
-        path: .coverage
-        retention-days: 7
         
     - name: Check for uncommitted changes
       run: |
