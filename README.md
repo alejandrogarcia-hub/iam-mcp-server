@@ -1,8 +1,23 @@
 # IAM MCP SERVER ... kind of 🤔
+<div align="center">
 
-The Individual Applicant Mesh (IAM) MCP Server is designed to process and manage applicant resumes, as well as facilitate job searches. It offers specialized tools and prompts for job searching, resume aggregation, generating job-specific resumes, and creating tailored cover letters.
+[![PyPI][pypi-badge]][pypi-url]
+[![MIT licensed][mit-badge]][mit-url]
+[![Python Version][python-badge]][python-url]
 
-Note: This server does not fully handle system integrations. Instead, it provides focused functionality specifically for an MCP host—hence the "kind of 🤔" in the name.
+</div>
+
+<strong>The Individual Applicant Mesh (IAM) MCP Server is designed to process and manage applicant resumes, as well as facilitate job searches. It offers specialized tools and prompts for job searching, resume aggregation, generating job-specific resumes, and creating tailored cover letters.
+</strong>
+
+[pypi-badge]: https://img.shields.io/pypi/v/mcp.svg
+[pypi-url]: https://pypi.org/project/iam-mcp-server/
+[mit-badge]: https://img.shields.io/pypi/l/mcp.svg
+[mit-url]: https://github.com/alejandrogarcia-hub/iam-mcp-server/blob/main/LICENSE
+[python-badge]: https://img.shields.io/pypi/pyversions/mcp.svg
+[python-url]: https://www.python.org/downloads/
+
+<strong>Note: This server does not fully handle system integrations. Instead, it provides focused functionality specifically for an MCP host—hence the "kind of 🤔" in the name.</strong>
 
 ## 📝 Requirements
 
