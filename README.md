@@ -19,6 +19,8 @@
 
 ### 1. Use Claude Desktop as MCP host
 
+The IAM MCP Server is designed to work with Claude Desktop, which provides the necessary MCP host environment. For more details on setting up Claude Desktop with MCP, see the [official MCP quickstart guide](https://modelcontextprotocol.io/quickstart/user).
+
 ### 2. Add filesystem MCP server
 
 Add the `filesystem` MCP server to Claude Desktop to enable file system access (see Requirements section below for configuration example).
