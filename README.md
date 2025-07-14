@@ -1,14 +1,10 @@
 # IAM MCP SERVER ... kind of 🤔
-<div align="center">
 
 [![PyPI][pypi-badge]][pypi-url]
 [![MIT licensed][mit-badge]][mit-url]
 [![Python Version][python-badge]][python-url]
 
-</div>
-
-<strong>The Individual Applicant Mesh (IAM) MCP Server is designed to process and manage applicant resumes, as well as facilitate job searches. It offers specialized tools and prompts for job searching, resume aggregation, generating job-specific resumes, and creating tailored cover letters.
-</strong>
+**The Individual Applicant Mesh (IAM) MCP Server is designed to process and manage applicant resumes, as well as facilitate job searches. It offers specialized tools and prompts for job searching, resume aggregation, generating job-specific resumes, and creating tailored cover letters.**
 
 [pypi-badge]: https://img.shields.io/pypi/v/mcp.svg
 [pypi-url]: https://pypi.org/project/iam-mcp-server/
@@ -17,7 +13,48 @@
 [python-badge]: https://img.shields.io/pypi/pyversions/mcp.svg
 [python-url]: https://www.python.org/downloads/
 
-<strong>Note: This server does not fully handle system integrations. Instead, it provides focused functionality specifically for an MCP host—hence the "kind of 🤔" in the name.</strong>
+**Note: This server does not fully handle system integrations. Instead, it provides focused functionality specifically for an MCP host—hence the "kind of 🤔" in the name.**
+
+## 🚀 Quickstart
+
+### 1. Use Claude Desktop as MCP host
+
+### 2. Add filesystem MCP server
+
+Add the `filesystem` MCP server to Claude Desktop to enable file system access (see Requirements section below for configuration example).
+
+### 3. Get JSearch API token
+
+Create a free account at [JSearch](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch) to get your API token (200 free requests/month).
+
+### 4. Configure IAM MCP Server
+
+Add the following to your Claude Desktop configuration to run the server directly from PyPI using `uvx`:
+
+```json
+{
+  "mcpServers": {
+    "iam": {
+      "command": "uvx",
+      "args": [
+        "--from", 
+        "iam-mcp-server@latest",
+        "mcp-server-iam"
+      ],
+      "env": {
+        "LOG_LEVEL": "INFO",
+        "RAPIDAPI_KEY": "<YOUR_API_KEY>",
+        "RAPIDAPI_HOST": "jsearch.p.rapidapi.com",
+        "MCP_TRANSPORT": "stdio"
+      }
+    }
+  }
+}
+```
+
+------------
+> **🚀 Ready to start using IAM MCP Server?**  
+> Check out the [Features](#-features) section to learn how to use the available tools and prompts.
 
 ## 📝 Requirements
 
@@ -178,7 +215,7 @@ IAM supports configuration through environment variables. Create a `.env` file i
 
 ## 📂 Repository Structure
 
-```
+```text
 iam-mcp-server/
 ├── src/                        # Source code
 │   └── mcp_server_iam/         # Main MCP server package
