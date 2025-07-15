@@ -13,7 +13,7 @@
 [python-badge]: https://img.shields.io/pypi/pyversions/mcp.svg
 [python-url]: https://www.python.org/downloads/
 
-**Note: This server does not fully handle system integrations. Instead, it provides focused functionality specifically for an MCP host—hence the "kind of 🤔" in the name.**
+**Note: This server does not fully handle system integrations. Instead, it provides focused functionality specifically for an MCP host—hence the "kind of 🤔".**
 
 > 💡 **Community & Support**  
 > If you found this project helpful, please consider giving it a star ⭐️. Found a bug or have suggestions? Open an issue—your feedback is welcome!
