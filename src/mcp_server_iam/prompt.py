@@ -236,69 +236,122 @@ def mesh_resumes(
 
     return f"""
 # System Instructions for Creating a Resume Mesh
-You are tasked with creating a resume mesh from multiple resumes, or CVs, that are attached to this conversation.
+You have been given multiple resumes (CVs) of the same person. Mesh them into one unified resume by applying the following rules:
+- Include every section from all the input resumes. Don't drop any section, even if some sections cover similar information.
+- If two resumes have the exact same section title (such as Skills), merge their contents into a single list and avoid duplicates.
+- If two resumes have sections with different titles for similar content (for example, Summary vs Professional Summary), include both sections in the combined resume.
+- Use clear, descriptive section headings and list all details under each section (for example, list all jobs under Work Experience).
 
 ## Process
 
 ### 1. Conversion (MCP host)
-   - For each attached resume file, convert PDF files to Markdown format. Maintain the original layout and formatting.
-   - For files already in text/markdown format, proceed directly to preprocessing
+- For each attached resume file, convert PDF files to Markdown format. Maintain the original layout and formatting.
+- For files already in text/markdown format, proceed directly to preprocessing
 
 ### 2. Pre-processing (MCP host)
-   - CLEAN bad grammar and FIX typos in each resume
-   - Do NOT alter the meaning or add new content
-   - PRESERVE all original information and context
+- CLEAN bad grammar and FIX typos in each resume
+- DO NOT alter the meaning or add new content
+- PRESERVE all original information and context
 
 ### 3. Extraction (LLM)
-   - Extract content under each section
-   - Identify other clearly labeled sections and extract their content
-   - Preserve dates, locations, company names, and specific achievements
+- Extract content under each section
+- Identify other clearly labeled sections and extract their content
+- Preserve dates, locations, company names, and specific achievements
 
 ### 4. Merging and Alignment (LLM)
-   - Group entries by section (for same sections) OR entity (same job title, employer, and time frame) across all resumes
-   - For each group, include Employer, Title, Location, and Dates ONCE
-   - Combine all related bullet points and paragraphs from different resumes
-   - Maintain chronological order within sections
+- Group entries by section (for same sections) OR entity (same job title, employer, and time frame) across all resumes
+- For each group, include Employer, Title, Location, and Dates ONCE
+- Combine all related bullet points and paragraphs from different resumes
+- Maintain chronological order within sections
 
-## Example Merging
+## Resume Mesh Example 1
 ```
-From Resume 1:
+<resume1>
 
 Summary
 
-Enterprise data and AI architect, with 10+ years of experience designing and delivering cloud-scale AI, data-analytics and backend platforms in finance, IoT and fintech.
+Enterprise data and AI architect, with 10+ years of experience designing and delivering cloud-scale AI, data-analytics and backend platforms in finance, IoT and eCommerce.
 
-Sygnum Bank, Zurich, Switzerland
-Solutions Architect Specialist, August 2022 – December 2024
+Company X, Miami, USA
+Tech Specialist, August 2022 – December 2024
 - Led AI-based portfolio to enhance operational efficiency
-- Technical Lead for end-to-end triage system for operational incidents based on RAG, serverless architecture, AI agents and workflows, achieving 20% reduction in operational costs and 30% reduction in critical system incidents  
 
-From Resume 2:
+</resume1>
+
+<resume2>
 
 Summary
 
 Computer Scientist with expertise in enterprise data architecture, implementing data platforms, and integrating diverse data sources for AI/ML activities.
 
-Sygnum Bank, Zurich, Switzerland  
+Company X, Miami, USA
 Solutions Architect Specialist, August 2022 – December 2024
 - Leadership and technical expertise across multiple value streams
-- Mentored tech leads in shipping products within regulated environment
 
-Merged Output:
+</resume2>
+
+<resumeMeshed>
 
 ## Summary
 
-Enterprise data and AI architect, with 10+ years of experience designing and delivering cloud-scale AI, data-analytics and backend platforms in finance, IoT and fintech. 
+Enterprise data and AI architect, with 10+ years of experience designing and delivering cloud-scale AI, data-analytics and backend platforms in finance, IoT and eCommerce.
 
 Computer Scientist with expertise in enterprise data architecture, implementing data platforms, and integrating diverse data sources for AI/ML activities.
 
-## Sygnum Bank
-**Solutions Architect Specialist** | Zurich, Switzerland | August 2022 – December 2024
+## Company X
+**Tech Specialist** | Miami, USA | August 2022 – December 2024
+**Solutions Architect Specialist** | Miami, USA | August 2022 – December 2024
 
-- Led AI-based portfolio to enhance operational efficiency and business competitiveness within regulated financial environment
-- Technical Lead for end-to-end triage system for operational incidents based on RAG, serverless architecture, AI agents and workflows, achieving 20% reduction in operational costs and 30% reduction in critical system incidents  
-- Leadership and technical expertise across multiple value streams, driving innovation in agile environment
-- Mentored tech leads in shipping products within regulated technological landscape
+- Led AI-based portfolio to enhance operational efficiency
+- Leadership and technical expertise across multiple value streams
+
+</resumeMeshed>
+```
+
+## Resume Mesh Example 2
+```
+<resume1>
+
+Summary
+
+Enterprise data and AI architect, with 10+ years of experience designing and delivering cloud-scale AI, data-analytics and backend platforms in finance, IoT and eCommerce.
+
+Company X, Miami, USA
+Tech Specialist, August 2022 – December 2024
+- Led AI-based portfolio to enhance operational efficiency
+
+</resume1>
+
+<resume2>
+
+Professional Summary
+
+Computer Scientist with expertise in enterprise data architecture, implementing data platforms, and integrating diverse data sources for AI/ML activities.
+
+Company X, Miami, USA
+Solutions Architect Specialist, August 2022 – December 2024
+- Leadership and technical expertise across multiple value streams
+
+</resume2>
+
+<resumeMeshed>
+
+## Summary
+
+Enterprise data and AI architect, with 10+ years of experience designing and delivering cloud-scale AI, data-analytics and backend platforms in finance, IoT and eCommerce.
+
+## Professional Summary
+
+Computer Scientist with expertise in enterprise data architecture, implementing data platforms, and integrating diverse data sources for AI/ML activities.
+
+## Company X
+**Tech Specialist** | Miami, USA | August 2022 – December 2024
+**Solutions Architect Specialist** | Miami, USA | August 2022 – December 2024
+
+- Led AI-based portfolio to enhance operational efficiency
+- Leadership and technical expertise across multiple value streams
+
+</resumeMeshed>
 ```
 
 ## Output
