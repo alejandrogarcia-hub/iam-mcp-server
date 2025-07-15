@@ -15,6 +15,9 @@
 
 **Note: This server does not fully handle system integrations. Instead, it provides focused functionality specifically for an MCP host—hence the "kind of 🤔" in the name.**
 
+> 💡 **Community & Support**  
+> If you found this project helpful, please consider giving it a star ⭐️. Found a bug or have suggestions? Open an issue—your feedback is welcome!
+
 ## 🚀 Quickstart
 
 ### 1. Use Claude Desktop as MCP host
@@ -28,6 +31,8 @@ Add the `filesystem` MCP server to Claude Desktop to enable file system access (
 ### 3. Get JSearch API token
 
 Create a free account at [JSearch](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch) to get your API token (200 free requests/month).
+
+⚠️ **Note:** This step is optional. You can let the MCP host or another MCP server handle job searches instead.
 
 ### 4. Configure IAM MCP Server
 
