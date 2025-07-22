@@ -212,3 +212,11 @@ __marimo__/
 .python-version
 CLAUDE.md
 RELEASE_GUIDE.md
+
+# DXT Extension files
+dxt/*.dxt
+dxt/lib/
+
+# Generated requirements files
+requirements.txt
+requirements-dev.txt

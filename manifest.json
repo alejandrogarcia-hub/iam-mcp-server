@@ -1,0 +1,125 @@
+{
+  "dxt_version": "0.1",
+  "name": "iam-mcp-server",
+  "display_name": "Individual Applicant Mesh (IAM) MCP Server",
+  "version": "2.1.0",
+  "description": "MCP server for job search automation, resume management, and application tracking",
+  "long_description": "The Individual Applicant Mesh (IAM) MCP Server provides comprehensive tools for job seekers including job search via JSearch API, resume aggregation and meshing, job-specific resume generation, and tailored cover letter creation. Built on the Model Context Protocol (MCP) for seamless integration with AI assistants.",
+  "author": {
+    "name": "Alejandro Garcia",
+    "email": "github_dev.chowder574@passmail.net",
+    "url": "https://github.com/alejandrogarcia-hub"
+  },
+  "icon": "icon.png",
+  "homepage": "https://github.com/alejandrogarcia-hub/iam-mcp-server",
+  "documentation": "https://github.com/alejandrogarcia-hub/iam-mcp-server/blob/main/README.md",
+  "server": {
+    "type": "python",
+    "entry_point": "mcp_server_iam/__main__.py",
+    "mcp_config": {
+      "command": "python",
+      "args": [
+        "-m",
+        "mcp_server_iam"
+      ],
+      "env": {
+        "PYTHONPATH": "${__dirname}/src:${__dirname}/dxt/lib",
+        "RAPIDAPI_KEY": "${user_config.jsearch_api_key}",
+        "RAPIDAPI_HOST": "jsearch.p.rapidapi.com"
+      }
+    }
+  },
+  "user_config": {
+    "jsearch_api_key": {
+      "type": "string",
+      "title": "JSearch API Key",
+      "description": "Your RapidAPI key for the JSearch job search API",
+      "sensitive": true,
+      "required": false
+    }
+  },
+  "tools": [
+    {
+      "name": "search_jobs",
+      "description": "Search for job openings based on role, location, and platform preferences"
+    }
+  ],
+  "prompts": [
+    {
+      "name": "analyze_job_market",
+      "description": "Analyze the job market for top jobs for a given role and location",
+      "arguments": [
+        "role",
+        "city",
+        "country",
+        "platform",
+        "num_jobs"
+      ],
+      "text": "AI Engineer, Zurich, Switzerland, linkedin, 5"
+    },
+    {
+      "name": "save_jobs",
+      "description": "Generate instructions for saving job search results to a structured JSON file",
+      "arguments": [
+        "jobs_dir",
+        "role",
+        "city",
+        "n_jobs"
+      ],
+      "text": "/Users/username/jobs, AI Engineer, Zurich, 5"
+    },
+    {
+      "name": "mesh_resumes",
+      "description": "A comprehensive prompt for meshing multiple resumes into a single resume. This prompt guides the LLM through the process of converting, cleaning, extracting, and merging information from multiple resume files into a single comprehensive document.",
+      "arguments": [
+        "save_directory"
+      ],
+      "text": "/Users/username/jobs"
+    },
+    {
+      "name": "generate_resume",
+      "description": "Generate a resume for a given role, company and job description",
+      "arguments": [
+        "save_directory",
+        "role",
+        "company",
+        "job_description"
+      ],
+      "text": "/Users/username/jobs, AI Engineer, Google, Software Engineer"
+    },
+    {
+      "name": "generate_cover_letter",
+      "description": "Generate a cover letter for a given role, company and job description",
+      "arguments": [
+        "save_directory",
+        "role",
+        "company",
+        "job_description"
+      ],
+      "text": "/Users/username/jobs, AI Engineer, Google, Software Engineer"
+    }
+  ],
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "python": ">=3.11.0"
+  },
+  "keywords": [
+    "mcp",
+    "server",
+    "ai",
+    "resume",
+    "cv",
+    "jobseeker",
+    "jobs",
+    "automation"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alejandrogarcia-hub/iam-mcp-server"
+  }
+}

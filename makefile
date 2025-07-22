@@ -52,6 +52,24 @@ clean:
 
 pipeline: format lint_fix test clean
 
+# Build DXT bundle
+dxt:
+	@echo "Building DXT bundle..."
+	@mkdir -p dxt
+	@npx @anthropic-ai/dxt pack . dxt/iam_mcp_server-$$(grep '"version"' manifest.json | sed 's/.*"version": "\(.*\)".*/\1/').dxt
+
+# Generate requirements files
+requirements:
+	uv pip compile pyproject.toml -o requirements.txt
+	uv pip compile pyproject.toml --group dev -o requirements-dev.txt
+
+# Build distribution packages
+build:
+	uv build
+
+# Build everything
+dist: clean build dxt
+
 # Run all checks
 all: clean install format lint test
 
