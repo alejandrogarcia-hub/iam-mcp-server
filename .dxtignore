@@ -54,11 +54,9 @@ Thumbs.db
 *.log
 
 # DXT build directory (exclude .dxt files but include lib)
+dxt/lib
 dxt/*.dxt
 dxt/icon.png
 
 # Claude settings
 .claude/
-
-# Custom scripts
-create_dxt.py
