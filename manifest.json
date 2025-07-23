@@ -1,7 +1,7 @@
 {
   "dxt_version": "0.1",
-  "name": "iam-mcp-server",
-  "display_name": "Individual Applicant Mesh (IAM) MCP Server",
+  "name": "Individual Applicant Mesh (IAM) MCP Server",
+  "display_name": "iam-mcp",
   "version": "2.1.0",
   "description": "MCP server for job search automation, resume management, and application tracking",
   "long_description": "The Individual Applicant Mesh (IAM) MCP Server provides comprehensive tools for job seekers including job search via JSearch API, resume aggregation and meshing, job-specific resume generation, and tailored cover letter creation. Built on the Model Context Protocol (MCP) for seamless integration with AI assistants.",
@@ -17,13 +17,19 @@
     "type": "python",
     "entry_point": "mcp_server_iam/__main__.py",
     "mcp_config": {
-      "command": "python",
+      "command": "${HOME}/.local/bin/uvx",
       "args": [
+        "--from",
+        "${__dirname}",
+        "python",
         "-m",
         "mcp_server_iam"
       ],
       "env": {
-        "PYTHONPATH": "${__dirname}/src:${__dirname}/dxt/lib",
+        "PYTHONPATH": "${__dirname}/src",
+        "UV_PYTHON": "3.11",
+        "UV_ONLY_BINARY": ":all:",
+        "SETUPTOOLS_SCM_PRETEND_VERSION": "2.1.0",
         "RAPIDAPI_KEY": "${user_config.jsearch_api_key}",
         "RAPIDAPI_HOST": "jsearch.p.rapidapi.com"
       }
