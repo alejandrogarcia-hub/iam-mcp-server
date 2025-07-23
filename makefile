@@ -1,4 +1,4 @@
-.PHONY: format lint check clean install test all
+.PHONY: format lint check clean install test all pipeline dxt requirements build dist
 
 # Python source files
 PYTHON_FILES = src/*
@@ -54,9 +54,10 @@ pipeline: format lint_fix test clean
 
 # Build DXT bundle
 dxt:
-	@echo "Building DXT bundle..."
-	@mkdir -p dxt
-	@npx @anthropic-ai/dxt pack . dxt/iam_mcp_server-$$(grep '"version"' manifest.json | sed 's/.*"version": "\(.*\)".*/\1/').dxt
+	echo "Building DXT bundle..."
+	rm -f dxt/iam_mcp_server-$$(grep '"version"' manifest.json | sed 's/.*"version": "\(.*\)".*/\1/').dxt
+	npx @anthropic-ai/dxt pack . dxt/iam_mcp_server-$$(grep '"version"' manifest.json | sed 's/.*"version": "\(.*\)".*/\1/').dxt
+	npx @anthropic-ai/dxt sign --self-signed dxt/iam_mcp_server-$$(grep '"version"' manifest.json | sed 's/.*"version": "\(.*\)".*/\1/').dxt
 
 # Generate requirements files
 requirements:
