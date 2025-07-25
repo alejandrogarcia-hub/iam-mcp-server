@@ -1,4 +1,4 @@
-.PHONY: format lint check clean install test all pipeline dxt requirements build dist
+.PHONY: format lint check clean install test test-dxt all pipeline dxt requirements build dist
 
 # Python source files
 PYTHON_FILES = src/*
@@ -36,6 +36,21 @@ check:
 # Run tests
 test:
 	uv run pytest
+
+# Test DXT build with specific version
+test-dxt:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Running DXT build test with default version 2.2.0"; \
+		VERSION="2.2.0"; \
+	else \
+		echo "Running DXT build test with version $(VERSION)"; \
+		VERSION="$(VERSION)"; \
+	fi; \
+	python tests/test_dxt_build.py $$VERSION; \
+	TEST_RESULT=$$?; \
+	echo "Cleaning up test DXT files..."; \
+	rm -f dxt/iam_mcp_server-$$VERSION.dxt dxt/iam_mcp_server-$$VERSION.dxt.sig; \
+	exit $$TEST_RESULT
 
 # Clean up python cache files
 clean:
