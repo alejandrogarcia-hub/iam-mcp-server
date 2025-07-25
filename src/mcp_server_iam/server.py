@@ -47,8 +47,9 @@ async def search_jobs(
         Literal["linkedin", "indeed", "glassdoor"] | None,
         Field(description="Specific job platform to search on"),
     ] = None,
-    n_jobs: Annotated[
-        int, Field(description="Number of job results to return", ge=1, le=20)
+    num_jobs: Annotated[
+        int,
+        Field(description="Number of job results to return", ge=1, le=20, default=5),
     ] = 5,
     slice_job_description: Annotated[
         int | None,
@@ -70,7 +71,7 @@ async def search_jobs(
         city: Optional city to filter results (must provide country if specified)
         country: Optional country for location-based search
         platform: Optional specific platform to search (linkedin, indeed, glassdoor)
-        n_jobs: Number of results to return (1-20, default 5)
+        num_jobs: Number of results to return (1-20, default 5)
         slice_job_description: Optional character limit for job descriptions
 
     Returns:
@@ -81,7 +82,7 @@ async def search_jobs(
         city=city,
         country=country,
         platform=platform,
-        n_jobs=n_jobs,
+        num_jobs=num_jobs,
         slice_job_description=slice_job_description,
     )
 
@@ -110,6 +111,7 @@ async def analyze_job_market(
         int,
         Field(
             description="Number of job listings to analyze for market trends",
+            default=5,
             ge=1,
             le=20,
         ),
@@ -123,7 +125,7 @@ async def analyze_job_market(
         city: Target city for market analysis (requires country)
         country: Target country for market analysis
         platform: Specific platform to focus analysis on
-        num_jobs: Number of job listings to analyze for market trends
+        num_jobs: Number of job listings to analyze for market trends (1-20, default 5)
 
     Returns:
         str: A structured prompt that guides LLM to analyze job market trends, salary
@@ -159,20 +161,26 @@ async def save_jobs(
         ),
     ],
     city: Annotated[
-        str,
+        str | None,
         Field(
             description="City or location that was searched in",
-            min_length=1,
         ),
-    ],
-    n_jobs: Annotated[
+    ] = None,
+    country: Annotated[
+        str | None,
+        Field(
+            description="Country or location that was searched in",
+        ),
+    ] = None,
+    num_jobs: Annotated[
         int,
         Field(
             description="Number of job results to save",
+            default=5,
             ge=1,
             le=100,
         ),
-    ],
+    ] = 5,
 ) -> str:
     """
     Generate detailed instructions for saving job search results as JSON.
@@ -183,10 +191,10 @@ async def save_jobs(
 
     Args:
         jobs_dir: Target directory for saving the job file
-        date: Date when the job search was performed (YYYY-MM-DD)
         role: Job role/title that was searched for
-        city: City/location that was searched in
-        n_jobs: Number of job results to save
+        city: City/location that was searched in (optional)
+        country: Country/location that was searched in (optional)
+        num_jobs: Number of job results to save (1-100, default 5)
 
     Returns:
         str: Detailed instructions for saving job data as JSON
@@ -198,7 +206,8 @@ async def save_jobs(
         date=date,
         role=role,
         city=city,
-        n_jobs=n_jobs,
+        country=country,
+        num_jobs=num_jobs,
     )
 
 

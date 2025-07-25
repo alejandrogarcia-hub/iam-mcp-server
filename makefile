@@ -1,4 +1,4 @@
-.PHONY: format lint check clean install test all
+.PHONY: format lint check clean install test test-dxt all pipeline dxt requirements build dist
 
 # Python source files
 PYTHON_FILES = src/*
@@ -37,6 +37,21 @@ check:
 test:
 	uv run pytest
 
+# Test DXT build with specific version
+test-dxt:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Running DXT build test with default version 2.2.0"; \
+		VERSION="2.2.0"; \
+	else \
+		echo "Running DXT build test with version $(VERSION)"; \
+		VERSION="$(VERSION)"; \
+	fi; \
+	python tests/test_dxt_build.py $$VERSION; \
+	TEST_RESULT=$$?; \
+	echo "Cleaning up test DXT files..."; \
+	rm -f dxt/iam_mcp_server-$$VERSION.dxt dxt/iam_mcp_server-$$VERSION.dxt.sig; \
+	exit $$TEST_RESULT
+
 # Clean up python cache files
 clean:
 	find . -type d -name "__pycache__" -exec rm -r {} +
@@ -51,6 +66,32 @@ clean:
 
 
 pipeline: format lint_fix test clean
+
+# Build DXT bundle
+dxt:
+	echo "Building DXT bundle..."
+	# Use SETUPTOOLS_SCM_PRETEND_VERSION if set, otherwise extract from manifest.json
+	@if [ -n "$(SETUPTOOLS_SCM_PRETEND_VERSION)" ]; then \
+		VERSION="$(SETUPTOOLS_SCM_PRETEND_VERSION)"; \
+	else \
+		VERSION=$$(grep '"version"' manifest.json | sed 's/.*"version": "\(.*\)".*/\1/'); \
+	fi; \
+	echo "Building DXT version: $$VERSION"; \
+	rm -f dxt/iam_mcp_server-$$VERSION.dxt; \
+	npx @anthropic-ai/dxt pack . dxt/iam_mcp_server-$$VERSION.dxt; \
+	npx @anthropic-ai/dxt sign --self-signed dxt/iam_mcp_server-$$VERSION.dxt
+
+# Generate requirements files
+requirements:
+	uv pip compile pyproject.toml -o requirements.txt
+	uv pip compile pyproject.toml --group dev -o requirements-dev.txt
+
+# Build distribution packages
+build:
+	uv build
+
+# Build everything
+dist: clean build dxt
 
 # Run all checks
 all: clean install format lint test

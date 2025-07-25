@@ -1,0 +1,62 @@
+# Python virtual environments - MUST exclude
+.venv/
+venv/
+env/
+ENV/
+virtualenv/
+
+# Development files
+tests/
+*.test.py
+pytest.ini
+ruff.toml
+makefile
+
+# Build files
+dist/
+build/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+
+# Version control
+.git/
+.gitignore
+.github/
+
+# Environment files
+.env
+.env.*
+*.env
+
+# Documentation (except essential)
+RELEASE_GUIDE.md
+CLAUDE.md
+
+# Package management
+uv.lock
+requirements-dev.txt
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+.cursorignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
+
+# DXT build directory (exclude .dxt files but include lib)
+dxt/lib
+dxt/*.dxt
+dxt/icon.png
+
+# Claude settings
+.claude/

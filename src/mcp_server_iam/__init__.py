@@ -3,6 +3,8 @@
 A Model Context Protocol server for job search automation and analysis.
 """
 
+import sys
+
 try:
     from importlib.metadata import version
 

@@ -39,6 +39,7 @@ classifiers = [
 dependencies = [
     "mcp[cli]>=1.10.1",
     "pydantic>=2.11.7",
+    "pydantic-core>=2.33.0",
     "pydantic-settings>=2.10.1",
     "python-dotenv>=1.1.1",
     "python-json-logger>=3.3.0",
@@ -62,7 +63,6 @@ Issues = "https://github.com/alejandrogarcia-hub/iam-mcp-server/issues"
 
 [tool.uv]
 resolution = "highest"
-default-groups = ["dev"]
 required-version = ">=0.7.19"
 
 [tool.hatch.version]

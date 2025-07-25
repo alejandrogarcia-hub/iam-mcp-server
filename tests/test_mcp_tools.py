@@ -114,7 +114,7 @@ class TestSearchJobs:
             city="Seattle",
             country="United States",
             platform="linkedin",
-            n_jobs=1,
+            num_jobs=1,
             slice_job_description=50,
         )
 
@@ -651,7 +651,7 @@ class TestSearchJobsIntegration:
             city="Mountain View",
             country="US",
             platform="linkedin",
-            n_jobs=1,
+            num_jobs=1,
             slice_job_description=100,
         )
 

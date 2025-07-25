@@ -137,9 +137,33 @@ Performs a job search using the following parameters:
 
 ## 🛠️ Installation & Setup
 
-You can easily install this project as a Python package from PyPI: [iam-mcp-server](https://pypi.org/project/iam-mcp-server/).
+The IAM MCP Server can be installed in multiple ways:
 
-### 🖥️ MCP host (Claude Desktop)
+### 📦 Desktop Extension (DXT) - Recommended
+
+**Easiest way to get started!** Build and install as a DXT extension:
+
+- **Requirements**: Python ≥3.11
+- **Platforms**: macOS, Windows, Linux  
+- **Dependencies**: All included (self-contained)
+- **Size**: ~6.8MB
+
+Simply build the `.dxt` file using `make dxt` and install in Claude Desktop or other MCP-compatible applications. No additional setup required!
+
+### 🐍 Python Package from PyPI
+
+You can also install this project as a Python package from PyPI: [iam-mcp-server](https://pypi.org/project/iam-mcp-server/).
+
+#### DXT Installation in Claude Desktop
+
+1. Build the DXT extension: `make dxt`
+2. In Claude Desktop, go to Settings → Extensions  
+3. Install the generated `.dxt` file from the `dxt/` directory
+4. Configure your JSearch API key in the extension settings (optional)
+
+### 🖥️ Alternative: Manual MCP Configuration
+
+For manual installation or other MCP hosts:
 
 1. Locate your `claude_desktop_config.json` file:
    - **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`

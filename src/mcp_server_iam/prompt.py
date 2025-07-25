@@ -25,6 +25,7 @@ async def analyze_job_market(
         int,
         Field(
             description="Number of job listings to analyze for market trends",
+            default=5,
             ge=1,
             le=20,
         ),
@@ -38,7 +39,7 @@ async def analyze_job_market(
         city: Target city for market analysis (requires country)
         country: Target country for market analysis
         platform: Specific platform to focus analysis on
-        num_jobs: Number of job listings to analyze for market trends
+        num_jobs: Number of job listings to analyze for market trends (1-20, default 5)
 
     Returns:
         str: A structured prompt that guides LLM to analyze job market trends, salary
@@ -96,7 +97,6 @@ def save_jobs(
     jobs_dir: Annotated[str, Field(description="Directory to save jobs")],
     date: Annotated[str, Field(description="Date of the job search")],
     role: Annotated[str, Field(description="Role of the job search")],
-    n_jobs: Annotated[int, Field(description="Number of jobs to save")],
     city: Annotated[
         str | None,
         Field(description="Target city for job search"),
@@ -104,6 +104,10 @@ def save_jobs(
     country: Annotated[
         str | None, Field(description="Target country for market analysis")
     ] = None,
+    num_jobs: Annotated[
+        int,
+        Field(description="Number of jobs to save", default=5, ge=1, le=100),
+    ] = 5,
 ) -> str:
     """
     Generate instructions for saving job search results to a JSON file.
@@ -115,7 +119,7 @@ def save_jobs(
         jobs_dir: Target directory path for saving the job file
         date: Date when the job search was performed (YYYY-MM-DD format)
         role: Job role/title that was searched for
-        n_jobs: Number of job results to save
+        num_jobs: Number of job results to save (1-100, default 5)
         city: City/location that was searched in
         country: Country/location that was searched in
 
@@ -144,7 +148,7 @@ def save_jobs(
         safe_country = safe_country.replace(" ", "_")
         filename_parts.append(safe_country)
 
-    filename_parts.append(str(n_jobs))
+    filename_parts.append(str(num_jobs))
     filename = "_".join(filename_parts) + ".json"
 
     return f"""
@@ -203,7 +207,7 @@ Each job must be saved with this exact structure:
 After saving, confirm:
 - File was created at the correct path
 - JSON is valid and parseable  
-- All {n_jobs} jobs were saved successfully
+- All {num_jobs} jobs were saved successfully
 - File size is reasonable (not empty or corrupted)
 
 ## IMPORTANT

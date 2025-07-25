@@ -31,6 +31,10 @@ jobs:
     environment:
       name: pypi
       url: https://pypi.org/p/iam-mcp-server/
+    outputs:
+      version: ${{ steps.check_release.outputs.version }}
+      tag_name: ${{ steps.check_release.outputs.tag_name }}
+      release_created: ${{ steps.check_release.outputs.needed }}
     
     steps:
     - name: Checkout repository
@@ -278,3 +282,123 @@ jobs:
         echo "::notice::2. Check git tags: git tag -l 'v*'"
         echo "::notice::3. Manual cleanup may be required before next release"
         echo "::notice::4. Contact maintainer if unsure about state"
+  
+  build-dxt:
+    name: Build DXT Extension
+    runs-on: ubuntu-latest
+    needs: release
+    if: needs.release.outputs.release_created == 'true' && !inputs.dry_run
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: ${{ needs.release.outputs.tag_name }}  # Checkout the release tag
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install uv package manager
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        cache-dependency-glob: |
+          pyproject.toml
+          requirements*.txt
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Install dxt CLI
+      run: npm install -g @anthropic-ai/dxt
+    
+    - name: Install dependencies
+      run: |
+        uv venv
+        uv pip sync pyproject.toml
+    
+    - name: Update manifest.json versions temporarily
+      run: |
+        # Create a backup of original manifest.json
+        cp manifest.json manifest.json.backup
+        
+        # Update both version fields in manifest.json
+        python -c "
+        import json
+        
+        version = '${{ needs.release.outputs.version }}'
+        
+        # Read manifest.json
+        with open('manifest.json', 'r') as f:
+            manifest = json.load(f)
+        
+        # Update main version field
+        manifest['version'] = version
+        
+        # Update SETUPTOOLS_SCM_PRETEND_VERSION in env
+        if 'server' in manifest and 'mcp_config' in manifest['server'] and 'env' in manifest['server']['mcp_config']:
+            manifest['server']['mcp_config']['env']['SETUPTOOLS_SCM_PRETEND_VERSION'] = version
+        
+        # Write back
+        with open('manifest.json', 'w') as f:
+            json.dump(manifest, f, indent=2)
+            f.write('\n')  # Add newline at end of file
+        
+        print(f'Updated manifest.json to version {version}')
+        "
+        
+        # Verify the update
+        echo "Updated manifest.json versions:"
+        jq '.version, .server.mcp_config.env.SETUPTOOLS_SCM_PRETEND_VERSION' manifest.json
+    
+    - name: Build DXT extension with version
+      env:
+        SETUPTOOLS_SCM_PRETEND_VERSION: ${{ needs.release.outputs.version }}
+      run: |
+        echo "Building DXT for version: ${{ needs.release.outputs.version }}"
+        
+        # Create dxt directory if it doesn't exist
+        mkdir -p dxt
+        
+        # Build using makefile with version override
+        make dxt
+        
+        # Verify DXT was created
+        ls -la dxt/
+        
+        # Extract actual version from DXT filename
+        DXT_FILE=$(ls dxt/*.dxt | head -1)
+        echo "DXT file created: $DXT_FILE"
+    
+    - name: Restore original manifest.json
+      if: always()  # Always restore, even if build fails
+      run: |
+        # Restore the original manifest.json
+        if [ -f manifest.json.backup ]; then
+          mv manifest.json.backup manifest.json
+          echo "Restored original manifest.json"
+        fi
+    
+    - name: Upload DXT to GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ needs.release.outputs.tag_name }}
+        files: |
+          dxt/*.dxt
+          dxt/*.dxt.sig
+        fail_on_unmatched_files: true
+    
+    - name: DXT Build Summary
+      run: |
+        echo "## DXT Extension Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version**: ${{ needs.release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Tag**: ${{ needs.release.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ✅ Successfully built and uploaded to release" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "The DXT extension has been added to the GitHub release." >> $GITHUB_STEP_SUMMARY
+        echo "Users can download it from: https://github.com/alejandrogarcia-hub/iam-mcp-server/releases/tag/${{ needs.release.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY

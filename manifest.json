@@ -1,0 +1,139 @@
+{
+  "dxt_version": "0.1",
+  "name": "Individual Applicant Mesh (IAM) MCP Server",
+  "display_name": "iam-mcp",
+  "version": "2.1.0",
+  "description": "MCP server for job search automation, resume management, and application tracking",
+  "long_description": "The Individual Applicant Mesh (IAM) MCP Server provides comprehensive tools for job seekers including job search via JSearch API, resume aggregation and meshing, job-specific resume generation, and tailored cover letter creation. Built on the Model Context Protocol (MCP) for seamless integration with AI assistants.",
+  "author": {
+    "name": "Alejandro Garcia",
+    "email": "github_dev.chowder574@passmail.net",
+    "url": "https://github.com/alejandrogarcia-hub"
+  },
+  "icon": "icon.png",
+  "homepage": "https://github.com/alejandrogarcia-hub/iam-mcp-server",
+  "documentation": "https://github.com/alejandrogarcia-hub/iam-mcp-server/blob/main/README.md",
+  "server": {
+    "type": "python",
+    "entry_point": "mcp_server_iam/__main__.py",
+    "mcp_config": {
+      "command": "${user_config.path_to_uvx}/uvx",
+      "args": [
+        "--from",
+        "${__dirname}",
+        "mcp-server-iam"
+      ],
+      "env": {
+        "PYTHONPATH": "${__dirname}/src",
+        "UV_PYTHON": "3.11",
+        "UV_ONLY_BINARY": ":all:",
+        "SETUPTOOLS_SCM_PRETEND_VERSION": "2.1.0",
+        "RAPIDAPI_KEY": "${user_config.jsearch_api_key}",
+        "RAPIDAPI_HOST": "jsearch.p.rapidapi.com"
+      }
+    }
+  },
+  "user_config": {
+    "jsearch_api_key": {
+      "type": "string",
+      "title": "JSearch API Key",
+      "description": "Your RapidAPI key for the JSearch job search API",
+      "sensitive": true,
+      "required": false
+    },
+    "path_to_uvx": {
+      "type": "string",
+      "title": "Path to uvx",
+      "description": "Path to the uvx executable",
+      "default": "${HOME}/.local/bin",
+      "required": true
+    }
+  },
+  "tools": [
+    {
+      "name": "search_jobs",
+      "description": "Search for job openings based on role, location, and platform preferences"
+    }
+  ],
+  "tools_generated": true,
+  "prompts": [
+    {
+      "name": "analyze_job_market",
+      "description": "Analyze the job market for top jobs for a given role and location",
+      "arguments": [
+        "role",
+        "city",
+        "country",
+        "platform",
+        "num_jobs"
+      ],
+      "text": "\n    # System / Instruction Prompt for LLM\n    You are a data-driven AI assistant, your task is to analyze the job market for the top 5 positions matching a given AI Engineer, optionally filtered by Zurich and Switzerland, and sourced from linkedin."
+    },
+    {
+      "name": "save_jobs",
+      "description": "Generate instructions for saving job search results to a structured JSON file",
+      "arguments": [
+        "jobs_dir",
+        "role",
+        "city",
+        "country",
+        "num_jobs"
+      ],
+      "text": "\n# System Instructions for Saving Job Search Results\n\nYou are tasked with saving job search results to a structured JSON file. Follow these instructions precisely:\n\n## File Location and Naming\n- **Directory**: Save to `/Users/username/jobs` directory\n- **Filename**: `2025-07-23_AI_Engineer_Zurich_Switzerland_5.json`"
+    },
+    {
+      "name": "mesh_resumes",
+      "description": "A comprehensive prompt for meshing multiple resumes into a single resume. This prompt guides the LLM through the process of converting, cleaning, extracting, and merging information from multiple resume files into a single comprehensive document.",
+      "arguments": [
+        "save_directory"
+      ],
+      "text": "\n# System Instructions for Creating a Resume Mesh\nYou have been given multiple resumes (CVs) of the same person. Mesh them into one unified resume by applying the following rules:\n- Include every section from all the input resumes."
+    },
+    {
+      "name": "generate_resume",
+      "description": "Generate a resume for a given role, company and job description",
+      "arguments": [
+        "save_directory",
+        "role",
+        "company",
+        "job_description"
+      ],
+      "text": "\n    # System Instructions for Generating a Resume\n\n    Act like a seasoned career consultant and resume expert specializing in crafting tailor-made resumes for job seekers.\n    Your sole job now is to produce a Markdown resume that aligns perfectly with the `AI Engineer` Job Description (JD) at `Google`."
+    },
+    {
+      "name": "generate_cover_letter",
+      "description": "Generate a cover letter for a given role, company and job description",
+      "arguments": [
+        "save_directory",
+        "role",
+        "company",
+        "job_description"
+      ],
+      "text": "\n# System Instructions for Generating a Cover Letter\nAct like a seasoned career consultant and cover letter expert specializing in crafting tailor-made cover letter for job seekers.\n- Create a compelling cover letter for the \"AI Engineer\" position at Google."
+    }
+  ],
+  "prompts_generated": true,
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "python": ">=3.11.0"
+  },
+  "keywords": [
+    "mcp",
+    "server",
+    "ai",
+    "resume",
+    "cv",
+    "jobseeker",
+    "jobs",
+    "automation"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alejandrogarcia-hub/iam-mcp-server"
+  }
+}

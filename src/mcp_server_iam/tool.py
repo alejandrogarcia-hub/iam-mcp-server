@@ -65,8 +65,9 @@ def search_jobs(
         Literal["linkedin", "indeed", "glassdoor"] | None,
         Field(description="Specific job platform to search on"),
     ] = None,
-    n_jobs: Annotated[
-        int, Field(description="Number of job results to return", ge=1, le=20)
+    num_jobs: Annotated[
+        int,
+        Field(description="Number of job results to return", ge=1, le=20, default=5),
     ] = 5,
     slice_job_description: Annotated[
         int | None,
@@ -88,7 +89,7 @@ def search_jobs(
         city: Target city for job search (requires country)
         country: Country name or ISO code for location filtering
         platform: Specific job platform to search
-        n_jobs: Maximum number of results to return
+        num_jobs: Maximum number of results to return (1-20, default 5)
         slice_job_description: Character limit for job descriptions
 
     Returns:
@@ -146,7 +147,7 @@ def search_jobs(
         except ValueError:
             return {"message": "Invalid response format from job search API"}
 
-        job_list = data.get("data", [])[:n_jobs]
+        job_list = data.get("data", [])[:num_jobs]
 
         if not job_list:
             return {"message": "No jobs found."}
