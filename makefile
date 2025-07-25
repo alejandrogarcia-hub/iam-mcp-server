@@ -55,9 +55,16 @@ pipeline: format lint_fix test clean
 # Build DXT bundle
 dxt:
 	echo "Building DXT bundle..."
-	rm -f dxt/iam_mcp_server-$$(grep '"version"' manifest.json | sed 's/.*"version": "\(.*\)".*/\1/').dxt
-	npx @anthropic-ai/dxt pack . dxt/iam_mcp_server-$$(grep '"version"' manifest.json | sed 's/.*"version": "\(.*\)".*/\1/').dxt
-	npx @anthropic-ai/dxt sign --self-signed dxt/iam_mcp_server-$$(grep '"version"' manifest.json | sed 's/.*"version": "\(.*\)".*/\1/').dxt
+	# Use SETUPTOOLS_SCM_PRETEND_VERSION if set, otherwise extract from manifest.json
+	@if [ -n "$(SETUPTOOLS_SCM_PRETEND_VERSION)" ]; then \
+		VERSION="$(SETUPTOOLS_SCM_PRETEND_VERSION)"; \
+	else \
+		VERSION=$$(grep '"version"' manifest.json | sed 's/.*"version": "\(.*\)".*/\1/'); \
+	fi; \
+	echo "Building DXT version: $$VERSION"; \
+	rm -f dxt/iam_mcp_server-$$VERSION.dxt; \
+	npx @anthropic-ai/dxt pack . dxt/iam_mcp_server-$$VERSION.dxt; \
+	npx @anthropic-ai/dxt sign --self-signed dxt/iam_mcp_server-$$VERSION.dxt
 
 # Generate requirements files
 requirements:

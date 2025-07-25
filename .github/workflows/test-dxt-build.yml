@@ -1,0 +1,162 @@
+name: Test DXT Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_version:
+        description: 'Test version to build'
+        required: true
+        default: '2.2.0'
+        type: string
+
+jobs:
+  test-dxt-build:
+    name: Test DXT Build Process
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install uv package manager
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        cache-dependency-glob: |
+          pyproject.toml
+          requirements*.txt
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Install dxt CLI
+      run: npm install -g @anthropic-ai/dxt
+    
+    - name: Install Python dependencies
+      run: |
+        uv venv
+        uv pip sync pyproject.toml
+    
+    - name: Show current manifest versions
+      run: |
+        echo "## Current manifest.json versions"
+        echo "manifest version:"
+        jq -r '.version' manifest.json
+        echo "SETUPTOOLS_SCM_PRETEND_VERSION:"
+        jq -r '.server.mcp_config.env.SETUPTOOLS_SCM_PRETEND_VERSION' manifest.json
+    
+    - name: Test manifest update process
+      run: |
+        # Backup original
+        cp manifest.json manifest.json.backup
+        
+        # Update versions using Python (same as release workflow)
+        python -c "
+        import json
+        
+        version = '${{ inputs.test_version }}'
+        
+        # Read manifest.json
+        with open('manifest.json', 'r') as f:
+            manifest = json.load(f)
+        
+        # Update main version field
+        manifest['version'] = version
+        
+        # Update SETUPTOOLS_SCM_PRETEND_VERSION in env
+        if 'server' in manifest and 'mcp_config' in manifest['server'] and 'env' in manifest['server']['mcp_config']:
+            manifest['server']['mcp_config']['env']['SETUPTOOLS_SCM_PRETEND_VERSION'] = version
+        
+        # Write back
+        with open('manifest.json', 'w') as f:
+            json.dump(manifest, f, indent=2)
+            f.write('\n')
+        
+        print(f'Updated manifest.json to version {version}')
+        "
+        
+        echo "## Updated manifest.json versions"
+        echo "manifest version:"
+        jq -r '.version' manifest.json
+        echo "SETUPTOOLS_SCM_PRETEND_VERSION:"
+        jq -r '.server.mcp_config.env.SETUPTOOLS_SCM_PRETEND_VERSION' manifest.json
+    
+    - name: Build DXT with test version
+      env:
+        SETUPTOOLS_SCM_PRETEND_VERSION: ${{ inputs.test_version }}
+      run: |
+        echo "Building DXT for version: ${{ inputs.test_version }}"
+        
+        # Create dxt directory
+        mkdir -p dxt
+        
+        # Build DXT
+        make dxt
+        
+        # List created files
+        echo "## Created DXT files:"
+        ls -la dxt/
+    
+    - name: Verify DXT contents
+      run: |
+        echo "## Verifying DXT package contents"
+        
+        # Find the DXT file
+        DXT_FILE=$(ls dxt/*.dxt | head -1)
+        echo "DXT file: $DXT_FILE"
+        
+        # Create temp directory for extraction
+        mkdir -p temp_extract
+        
+        # Extract and check manifest inside DXT
+        unzip -q "$DXT_FILE" -d temp_extract
+        
+        echo "### Manifest version in DXT:"
+        jq -r '.version' temp_extract/manifest.json
+        
+        echo "### SETUPTOOLS_SCM_PRETEND_VERSION in DXT:"
+        jq -r '.server.mcp_config.env.SETUPTOOLS_SCM_PRETEND_VERSION' temp_extract/manifest.json
+        
+        # Cleanup
+        rm -rf temp_extract
+    
+    - name: Restore original manifest.json
+      if: always()
+      run: |
+        if [ -f manifest.json.backup ]; then
+          mv manifest.json.backup manifest.json
+          echo "✅ Restored original manifest.json"
+        fi
+    
+    - name: Upload test DXT artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-dxt-${{ inputs.test_version }}
+        path: |
+          dxt/*.dxt
+          dxt/*.dxt.sig
+        retention-days: 7
+    
+    - name: Test Summary
+      run: |
+        echo "## Test DXT Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Test Parameters" >> $GITHUB_STEP_SUMMARY
+        echo "- **Test Version**: ${{ inputs.test_version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ✅ Successfully built test DXT" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Created Files" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        ls -la dxt/ >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "The test DXT artifacts have been uploaded and will be available for 7 days." >> $GITHUB_STEP_SUMMARY
