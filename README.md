@@ -141,25 +141,48 @@ The IAM MCP Server can be installed in multiple ways:
 
 ### 📦 Desktop Extension (DXT) - Recommended
 
-**Easiest way to get started!** Build and install as a DXT extension:
+**One-click installation for MCP hosts!** DXT (Desktop Extension) format provides the easiest way to install and use the IAM MCP Server.
 
-- **Requirements**: Python ≥3.11
-- **Platforms**: macOS, Windows, Linux  
-- **Dependencies**: All included (self-contained)
-- **Size**: ~6.8MB
+#### Why DXT?
 
-Simply build the `.dxt` file using `make dxt` and install in Claude Desktop or other MCP-compatible applications. No additional setup required!
+Desktop Extensions eliminate the complexity of manual MCP server setup by bundling everything into a single installable package:
+
+- **No Python installation required** - All dependencies included
+- **One-click installation** - Just like browser extensions
+- **Automatic updates** - MCP hosts can manage updates
+- **Cross-platform** - Works on macOS, Windows, and Linux
+- **Self-contained** - No environment conflicts
+
+#### Download Latest DXT
+
+Get the latest pre-built DXT file from our GitHub releases:
+
+**[📥 Download Latest DXT →](https://github.com/alejandrogarcia-hub/iam-mcp-server/releases/latest)**
+
+Look for `iam_mcp_server-[version].dxt` in the release assets.
+
+#### Installation in Claude Desktop
+
+1. **Download** the latest `.dxt` file from releases
+2. **Open Claude Desktop** → Settings → Extensions
+3. **Install** the downloaded `.dxt` file
+4. **Configure** during installation with these settings:
+   - `jsearch_api_key`: Your RapidAPI key from [JSearch](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch) (optional - 200 free requests/month)
+   - `path_to_uvx`: Path to your uvx executable (usually `~/.local/bin` on macOS/Linux, `%USERPROFILE%\.local\bin` on Windows)
+
+#### Build DXT Locally
+
+Want to build your own DXT file?
+
+```bash
+make dxt
+```
+
+The built DXT file will be available in the `dxt/` directory as `iam_mcp_server-[version].dxt`.
 
 ### 🐍 Python Package from PyPI
 
 You can also install this project as a Python package from PyPI: [iam-mcp-server](https://pypi.org/project/iam-mcp-server/).
-
-#### DXT Installation in Claude Desktop
-
-1. Build the DXT extension: `make dxt`
-2. In Claude Desktop, go to Settings → Extensions  
-3. Install the generated `.dxt` file from the `dxt/` directory
-4. Configure your JSearch API key in the extension settings (optional)
 
 ### 🖥️ Alternative: Manual MCP Configuration
 
