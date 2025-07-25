@@ -390,7 +390,6 @@ jobs:
         tag_name: ${{ needs.release.outputs.tag_name }}
         files: |
           dxt/*.dxt
-          dxt/*.dxt.sig
         fail_on_unmatched_files: true
     
     - name: DXT Build Summary

@@ -143,7 +143,6 @@ jobs:
         name: test-dxt-${{ inputs.test_version }}
         path: |
           dxt/*.dxt
-          dxt/*.dxt.sig
         retention-days: 7
     
     - name: Test Summary

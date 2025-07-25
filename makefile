@@ -49,7 +49,7 @@ test-dxt:
 	python tests/test_dxt_build.py $$VERSION; \
 	TEST_RESULT=$$?; \
 	echo "Cleaning up test DXT files..."; \
-	rm -f dxt/iam_mcp_server-$$VERSION.dxt dxt/iam_mcp_server-$$VERSION.dxt.sig; \
+	rm -f dxt/iam_mcp_server-$$VERSION.dxt; \
 	exit $$TEST_RESULT
 
 # Clean up python cache files
