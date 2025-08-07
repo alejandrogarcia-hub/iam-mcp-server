@@ -4,7 +4,6 @@ from typing import Annotated, Literal
 from mcp.server.fastmcp import FastMCP
 from pydantic import Field
 
-from mcp_server_iam import __version__
 from mcp_server_iam.config import settings
 from mcp_server_iam.prompt import analyze_job_market as analyze_job_market_prompt
 from mcp_server_iam.prompt import generate_cover_letter_prompt, generate_resume_prompt
@@ -14,8 +13,7 @@ from mcp_server_iam.tool import search_jobs as search_jobs_impl
 
 mcp = FastMCP(
     name=settings.app_name,
-    version=__version__,
-    log_level=settings.log_level_name,
+    instructions="Individual Application Mesh (IAM) MCP Server for job search automation and analysis",
 )
 
 
