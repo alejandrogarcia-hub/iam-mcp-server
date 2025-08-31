@@ -1,0 +1,18 @@
+{
+  "MD033": {
+    "allowed_elements": [
+      "img",
+      "br",
+      "hr",
+      "sup",
+      "sub"
+    ]
+  },
+  "MD013": {
+    "line_length": 240,
+    "code_blocks": false
+  },
+  "MD024": false,
+  "MD040": false,
+  "MD041": false
+}
