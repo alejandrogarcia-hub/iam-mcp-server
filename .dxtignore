@@ -60,3 +60,4 @@ dxt/icon.png
 
 # Claude settings
 .claude/
+.markdownlint.json

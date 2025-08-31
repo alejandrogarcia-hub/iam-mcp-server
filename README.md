@@ -249,7 +249,7 @@ In your MCP host, ask: "What MCP tools are available?" or "List the available MC
 
 ### 🔍 MCP Inspector
 
-In terminal, run `mcp dev src/mcp_server_iam/__main__.py` and accept installing the MCP Inspector.
+In terminal, run `PYTHONPATH=src mcp dev src/mcp_server_iam/__main__.py` and accept installing the MCP Inspector.
 In the web inspector UI, click `connect` and interact with the MCP server.
 
 ⚠️ **Important**, this is for `dev` purposes only.

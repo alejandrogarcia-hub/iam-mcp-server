@@ -11,6 +11,7 @@ The IAM MCP Server can be packaged as a DXT extension:
 - **Compatibility**: Python ≥3.11, macOS/Windows/Linux
 
 ### Installation
+
 Install the generated `.dxt` file in your Claude Desktop or other MCP-compatible application.
 
 ## Prerequisites
