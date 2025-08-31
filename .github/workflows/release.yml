@@ -91,7 +91,7 @@ jobs:
       run: |
         BUMP_TYPE="${{ inputs.version_bump }}"
         echo "Manual version bump: $BUMP_TYPE"
-        NEXT_VERSION=$(uv run semantic-release --noop version --force-level=$BUMP_TYPE --print 2>/dev/null | tail -1)
+        NEXT_VERSION=$(uv run semantic-release --noop version --$BUMP_TYPE --print 2>/dev/null | tail -1)
         echo "next=$NEXT_VERSION" >> $GITHUB_OUTPUT
         echo "Next version: $NEXT_VERSION"
         

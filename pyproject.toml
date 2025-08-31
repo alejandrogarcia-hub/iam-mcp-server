@@ -80,7 +80,7 @@ major_on_zero = false
 allow_zero_version = false
 
 # Commit parsing - Angular convention
-commit_parser = "angular"
+commit_parser = "conventional"
 commit_parser_options = { parse_squash_commits = true, ignore_merge_commits = true }
 
 # Build configuration
