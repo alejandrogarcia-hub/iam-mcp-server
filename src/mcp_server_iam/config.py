@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+import os
+import sys
 from functools import lru_cache
 from pathlib import Path
 
@@ -63,6 +65,14 @@ class AppConfig(BaseSettings):
         description="Transport for MCP server",
         alias="MCP_TRANSPORT",
         examples=["stdio", "sse", "mcp_remote"],
+    )
+
+    data_root: str | None = Field(
+        default=None,
+        alias="IAM_DATA_ROOT",
+        description=(
+            "Base directory for writable application data (e.g., resume meshes, exports)"
+        ),
     )
 
     resume_mesh_filename: str = Field(
@@ -139,13 +149,10 @@ class AppConfig(BaseSettings):
 
     @property
     def resumes_dir(self) -> str:
-        """Return the path to the resumes directory."""
-        # Build an absolute path to ``src/resources/resumes`` regardless of
-        # the current working directory. We derive the location from this file
-        # (``src/config.py``), then navigate into the package resources folder.
+        """Return an absolute, user-writable path for storing resume meshes."""
 
-        base_path = Path(__file__).resolve().parent  # -> src/
-        resumes_path = (base_path / "resources" / "resumes").resolve()
+        base_path = self._resolve_data_root()
+        resumes_path = (base_path / "resumes").resolve()
 
         # Ensure the directory exists
         try:
@@ -154,6 +161,24 @@ class AppConfig(BaseSettings):
             raise ConfigurationError(f"Failed to create resumes directory: {e}") from e
 
         return str(resumes_path)
+
+    def _resolve_data_root(self) -> Path:
+        """Determine the writable application data directory."""
+
+        if self.data_root:
+            candidate = Path(self.data_root).expanduser()
+            return candidate.resolve()
+
+        if sys.platform.startswith("win"):
+            default_root = Path(
+                os.getenv("APPDATA", Path.home() / "AppData" / "Roaming")
+            )
+        else:
+            default_root = Path(
+                os.getenv("XDG_DATA_HOME", Path.home() / ".local" / "share")
+            )
+
+        return (default_root / "iam-mcp-server").resolve()
 
     @property
     def log_level_name(self) -> str:
