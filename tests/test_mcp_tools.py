@@ -301,9 +301,9 @@ class TestSearchJobs:
         # Assert
         assert len(result) == 1
         assert result[0]["job_id"] == "job1"
-        assert result[0]["title"] is None
-        assert result[0]["company"] is None
-        assert result[0]["location"] is None
+        assert result[0]["title"] == ""
+        assert result[0]["company"] == ""
+        assert result[0]["location"] == ""
         assert result[0]["description"] == ""
         assert result[0]["apply_link"] == "Not provided"
 
@@ -392,8 +392,10 @@ class TestSearchJobs:
 
         # Assert
         # The function currently passes through potentially dangerous content
-        assert result[0]["job_id"] == "<script>alert('xss')</script>"
-        assert result[0]["title"] == "<img src=x onerror=alert('xss')>"
+        assert "<" not in result[0]["job_id"]
+        assert "<" not in result[0]["title"]
+        assert "&lt;script" in result[0]["job_id"]
+        assert "&lt;img" in result[0]["title"]
 
     # ========== Network Error Tests ==========
 

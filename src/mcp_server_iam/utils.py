@@ -1,3 +1,20 @@
+from html import escape, unescape
+
+
+def sanitize_text(value: str | None, *, limit: int | None = None) -> str:
+    """Return a safely escaped representation of arbitrary text."""
+
+    if value is None:
+        return ""
+
+    text = unescape(str(value))
+
+    if limit is not None and limit > 0 and len(text) > limit:
+        text = text[:limit] + "\n...\n"
+
+    return escape(text, quote=True)
+
+
 def get_country_code(country_name: str) -> str:
     """
     Convert full country name to ISO_3166-1_alpha-2 code in lowercase.

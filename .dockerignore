@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Distribution artifacts
+build/
+dist/
+*.egg-info/
+*.dxt
+
+# Environment & tooling
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Node artifacts
+node_modules/
+
+# Misc
+.DS_Store
+*.log
+notebooks/

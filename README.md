@@ -159,6 +159,68 @@ Get the latest pre-built DXT file from our GitHub releases:
 
 **[📥 Download Latest DXT →](https://github.com/alejandrogarcia-hub/iam-mcp-server/releases/latest)**
 
+### 🐳 Container Sidecar
+
+Build a self-contained image and run it alongside your MCP host:
+
+```bash
+# Build image using published wheel (set APP_VERSION to released tag)
+docker build --no-cache --build-arg APP_VERSION=2.1.0 -t iam-mcp-server:2.1.0 .
+
+# For local source builds, omit APP_VERSION or pass APP_VERSION=local
+docker build -t iam-mcp-server:dev .
+
+# Start the server with a writable data volume and required secrets
+docker run --rm \
+  --name iam-mcp-server \
+  -e RAPIDAPI_KEY=your_rapidapi_key \
+  -e LOG_LEVEL=INFO \
+  -e MCP_TRANSPORT=stdio \
+  -v $(pwd)/data:/data \
+  iam-mcp-server:2.1.0
+
+# OR
+docker run --rm -i \
+    -e RAPIDAPI_KEY="your-api-key-here" \
+    -e LOG_LEVEL=DEBUG \
+    -v $(pwd)/data:/data \
+    iam-mcp-server:dev
+
+# then initialize the server
+'{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"0.1.0","capabilities":{},"clientInfo":{"name":"my-client","version":"1.0.0"}},"id":1}'
+
+# acknowledge the server
+'{"jsonrpc":"2.0","method":"notifications/initialized","params":{"capabilities":{}}}'
+
+# list available tools
+'{"jsonrpc": "2.0", "method": "tools/list", "params": {}, "id": 2}'
+
+# list available prompts
+'{"jsonrpc": "2.0", "method": "prompts/list", "params": {}, "id": 3}'
+```
+
+#### Test the container
+
+```bash
+echo '{"jsonrpc": "2.0", "method": "initialize", "params": {"protocolVersion": "0.1.0", "capabilities": {}, 
+  "clientInfo": {"name": "test", "version": "1.0.0"}}, "id": 1}' | docker run --rm -i iam-mcp-server:dev
+
+# List available tools
+echo '{"jsonrpc": "2.0", "method": "tools/list", "params": {}, "id": 2}' | docker run --rm -i iam-mcp-server:dev
+
+# List available prompts
+echo '{"jsonrpc": "2.0", "method": "prompts/list", "params": {}, "id": 3}' | docker run --rm -i iam-mcp-server:dev
+```
+
+Key runtime environment variables:
+
+- `RAPIDAPI_KEY` / `RAPIDAPI_HOST` – credentials for the JSearch integration.
+- `IAM_DATA_ROOT` (defaults to `/data`) – location where resume meshes and exports are written.
+- `LOG_LEVEL` – structured JSON logs emitted via stdout.
+- `MCP_TRANSPORT` – keep `stdio` for sidecar usage or swap for another supported transport when needed.
+
+Attach the container to your MCP host by pointing the host’s configuration at the container entry point. Share the `/data` volume with the host if it needs direct access to generated artifacts.
+
 Look for `iam_mcp_server-[version].dxt` in the release assets.
 
 #### Installation in Claude Desktop

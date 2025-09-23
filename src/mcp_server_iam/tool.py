@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated, Literal
 from urllib.parse import quote
 
@@ -12,7 +13,9 @@ from tenacity import (
 )
 
 from mcp_server_iam.config import settings
-from mcp_server_iam.utils import get_country_code
+from mcp_server_iam.utils import get_country_code, sanitize_text
+
+logger = logging.getLogger(__name__)
 
 
 @retry(
@@ -138,6 +141,10 @@ def search_jobs(
 
         if response.status_code != 200:
             # Don't expose raw response text for security
+            logger.warning(
+                "job_search_failed",
+                extra={"status_code": response.status_code},
+            )
             return {
                 "message": f"Failed to fetch jobs. API returned status {response.status_code}"
             }
@@ -145,44 +152,64 @@ def search_jobs(
         try:
             data = response.json()
         except ValueError:
+            logger.exception("job_search_invalid_response")
             return {"message": "Invalid response format from job search API"}
 
         job_list = data.get("data", [])[:num_jobs]
 
         if not job_list:
+            logger.info(
+                "job_search_empty_results",
+                extra={"role": role, "city": city, "country": country},
+            )
             return {"message": "No jobs found."}
 
         results = []
         for job in job_list:
-            desc = job.get("job_description", "")
-            summary = ""
-            if isinstance(desc, str):
-                summary = desc
-                if slice_job_description is not None and slice_job_description > 0:
-                    if len(desc) > slice_job_description:
-                        summary = desc[:slice_job_description] + "\n...\n"
+            description_raw = job.get("job_description")
+            if not isinstance(description_raw, str):
+                description_raw = ""
+
+            summary = sanitize_text(description_raw, limit=slice_job_description)
+
+            apply_link_raw = job.get("job_apply_link")
+            apply_link = (
+                sanitize_text(apply_link_raw) if apply_link_raw else "Not provided"
+            )
 
             results.append(
                 {
-                    "job_id": job.get("job_id"),
-                    "title": job.get("job_title"),
-                    "company": job.get("employer_name"),
-                    "location": job.get("job_city"),
+                    "job_id": sanitize_text(job.get("job_id")),
+                    "title": sanitize_text(job.get("job_title")),
+                    "company": sanitize_text(job.get("employer_name")),
+                    "location": sanitize_text(job.get("job_city")),
                     "description": summary,
-                    "apply_link": job.get("job_apply_link", "Not provided"),
+                    "apply_link": apply_link,
                 }
             )
 
+        logger.info(
+            "job_search_success",
+            extra={
+                "role": role,
+                "city": city,
+                "country": country,
+                "count": len(results),
+            },
+        )
         return results
 
     except ConnectionError:
+        logger.warning("job_search_connection_error")
         return {
             "message": "Unable to connect to job search service. Please try again later."
         }
     except Timeout:
+        logger.warning("job_search_timeout")
         return {"message": "Job search request timed out. Please try again."}
     except RequestException:
         # Generic request exception - log the actual error if logging is set up
+        logger.exception("job_search_generic_error")
         return {
             "message": "An error occurred while searching for jobs. Please try again later."
         }
