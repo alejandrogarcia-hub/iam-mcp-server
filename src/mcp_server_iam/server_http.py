@@ -97,7 +97,6 @@ def create_app():
         """Health check endpoint for Kubernetes probes."""
         return JSONResponse({"status": "healthy", "service": "iam-mcp-server"})
 
-
     app.add_route("/health", health_check, methods=["GET"])
 
     # Configure CORS if origins are specified
