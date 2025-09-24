@@ -1,0 +1,30 @@
+# Kustomization for IAM MCP Server
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: mcp
+
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - ingress.yaml
+
+# Configure image for different environments
+images:
+  - name: iam-mcp-server
+    newName: your-registry/iam-mcp-server  # Replace with your registry
+    newTag: latest
+
+# Common labels
+commonLabels:
+  app: iam-mcp-server
+  managed-by: kustomize
+
+# ConfigMap for environment variables (optional)
+configMapGenerator:
+  - name: iam-mcp-config
+    literals:
+      - LOG_LEVEL=INFO
+      - MCP_TRANSPORT=http
+      - PORT=8080
+      - HOST=0.0.0.0

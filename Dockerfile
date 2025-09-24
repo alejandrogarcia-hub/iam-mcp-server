@@ -20,6 +20,10 @@ COPY src ./src
 
 RUN pip install --upgrade pip setuptools wheel \
     && if [ "${APP_VERSION}" = "local" ]; then \
+         if [ "${CI:-}" = "true" ]; then \
+             echo "Error: APP_VERSION must be provided when building in CI" >&2; \
+             exit 1; \
+         fi; \
          pip install --no-cache-dir -r requirements.txt; \
        else \
          pip install --no-cache-dir "iam-mcp-server==${APP_VERSION}"; \
@@ -34,10 +38,17 @@ USER iam
 
 ENV IAM_DATA_ROOT=/data \
     LOG_LEVEL=INFO \
-    MCP_TRANSPORT=stdio
+    MCP_TRANSPORT=stdio \
+    PORT=8080 \
+    HOST=0.0.0.0
 
 VOLUME ["/data"]
 
+# Expose port for HTTP mode
+EXPOSE 8080
+
 ENV PYTHONPATH=/app/src${PYTHONPATH:+:$PYTHONPATH}
 
-ENTRYPOINT ["python", "-m", "mcp_server_iam"]
+# Default to stdio mode, but allow override via CMD
+ENTRYPOINT ["python", "-m"]
+CMD ["mcp_server_iam"]

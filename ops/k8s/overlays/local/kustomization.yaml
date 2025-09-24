@@ -1,0 +1,24 @@
+# Local development overlay for Docker Desktop Kubernetes
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: mcp
+
+resources:
+  - ../../
+
+# Use local image without pulling from registry
+images:
+  - name: iam-mcp-server
+    newName: iam-mcp-server
+    newTag: latest
+
+# Patch deployment for local development
+patchesStrategicMerge:
+  - deployment-patch.yaml
+
+# Local secret (for testing)
+secretGenerator:
+  - name: iam-mcp-secrets
+    literals:
+      - rapidapi-key=test-api-key  # Replace with your actual key

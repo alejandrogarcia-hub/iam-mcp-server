@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: iam-mcp-server
+  namespace: mcp
+  annotations:
+    nginx.ingress.kubernetes.io/cors-enable: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"  # For SSE long connections
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx  # Or your ingress class
+  rules:
+  - host: mcp.your-domain.com  # Replace with your domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: iam-mcp-server
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - mcp.your-domain.com
+    secretName: mcp-tls-cert  # Your TLS certificate secret
