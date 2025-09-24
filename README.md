@@ -186,17 +186,40 @@ docker run --rm -i \
     -v $(pwd)/data:/data \
     iam-mcp-server:dev
 
-# then initialize the server
-'{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"0.1.0","capabilities":{},"clientInfo":{"name":"my-client","version":"1.0.0"}},"id":1}'
+# Interactive stdio communication with Docker
 
-# acknowledge the server
-'{"jsonrpc":"2.0","method":"notifications/initialized","params":{"capabilities":{}}}'
+When running the container interactively, you can send JSON-RPC messages directly:
 
-# list available tools
-'{"jsonrpc": "2.0", "method": "tools/list", "params": {}, "id": 2}'
+```bash
+# Start the container in interactive mode
+docker run -i --rm ghcr.io/alejandrogarcia-hub/iam-mcp-server:latest
 
-# list available prompts
-'{"jsonrpc": "2.0", "method": "prompts/list", "params": {}, "id": 3}'
+# 1. Initialize the server (send this JSON and press Enter)
+{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"0.1.0","capabilities":{},"clientInfo":{"name":"client","version":"1.0.0"}},"id":1}
+
+# 2. Send initialized notification
+{"jsonrpc":"2.0","method":"notifications/initialized","params":{"capabilities":{}}}
+
+# 3. List available prompts
+{"jsonrpc":"2.0","method":"prompts/list","params":{},"id":2}
+
+# 4. List available tools
+{"jsonrpc":"2.0","method":"tools/list","params":{},"id":3}
+
+# 5. Graceful shutdown (optional - see note below)
+{"jsonrpc":"2.0","id":4,"method":"shutdown"}
+# Server responds with: {"jsonrpc":"2.0","id":4,"result":null}
+
+# 6. Exit notification
+{"jsonrpc":"2.0","method":"exit"}
+```
+
+**Note on Shutdown:** While MCP supports graceful shutdown via `shutdown` request followed by `exit` notification, in practice:
+- **Ctrl+C** immediately terminates the container (SIGINT) - fast but not graceful
+- **Ctrl+D** sends EOF to close stdin - cleaner than Ctrl+C
+- **Graceful shutdown sequence** allows the server to properly clean up resources, save state, and acknowledge before terminating
+
+The graceful shutdown is particularly important in production environments where the server might be handling ongoing operations or needs to persist state before terminating.
 ```
 
 #### Production Deployment with Kubernetes
