@@ -69,10 +69,11 @@ For local testing on macOS with Docker Desktop:
 
    The script will:
    - Build the Docker image locally
-   - Load it into Docker Desktop's Kubernetes nodes
+   - Auto-detect Docker Desktop node names (compatible across versions)
+   - Load image to Kubernetes nodes if possible (fallback to Docker daemon)
    - Create the namespace and secrets
    - Deploy the server
-   - Start port forwarding in the background
+   - Start port forwarding in the background (silently)
    - Save the process ID for clean teardown
    - Exit cleanly (non-blocking)
 

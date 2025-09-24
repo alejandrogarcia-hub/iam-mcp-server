@@ -48,11 +48,51 @@ fi
 # For Docker Desktop Kubernetes, we need to load the image to the cluster nodes
 echo "🏷️  Loading image into Docker Desktop Kubernetes cluster..."
 
-# Docker Desktop uses kind-like setup, load image to both nodes
-echo "   Loading to control-plane..."
-docker save iam-mcp-server:latest | docker exec -i desktop-control-plane ctr --namespace=k8s.io images import - || true
-echo "   Loading to worker node..."
-docker save iam-mcp-server:latest | docker exec -i desktop-worker ctr --namespace=k8s.io images import - || true
+# Try to detect Docker Desktop node names (they vary across versions)
+CONTROL_PLANE_NODE=""
+WORKER_NODE=""
+
+# Common node name patterns for Docker Desktop
+POSSIBLE_CONTROL_PLANES=("desktop-control-plane" "docker-desktop" "docker-for-desktop")
+POSSIBLE_WORKERS=("desktop-worker" "docker-desktop-worker")
+
+# Try to find control plane node
+for node in "${POSSIBLE_CONTROL_PLANES[@]}"; do
+    if docker ps -q -f name="^${node}$" 2>/dev/null | grep -q .; then
+        CONTROL_PLANE_NODE="$node"
+        echo "   Found control plane node: $node"
+        break
+    fi
+done
+
+# Try to find worker node
+for node in "${POSSIBLE_WORKERS[@]}"; do
+    if docker ps -q -f name="^${node}$" 2>/dev/null | grep -q .; then
+        WORKER_NODE="$node"
+        echo "   Found worker node: $node"
+        break
+    fi
+done
+
+# Load image to nodes if found, otherwise skip (will use local Docker daemon)
+if [ -n "$CONTROL_PLANE_NODE" ]; then
+    echo "   Loading image to control plane..."
+    docker save iam-mcp-server:latest | docker exec -i "$CONTROL_PLANE_NODE" ctr --namespace=k8s.io images import - 2>/dev/null || {
+        echo "   ⚠️  Could not load to control plane, will rely on local Docker daemon"
+    }
+else
+    echo "   ⚠️  Control plane node not found, will rely on local Docker daemon"
+fi
+
+if [ -n "$WORKER_NODE" ]; then
+    echo "   Loading image to worker node..."
+    docker save iam-mcp-server:latest | docker exec -i "$WORKER_NODE" ctr --namespace=k8s.io images import - 2>/dev/null || {
+        echo "   ⚠️  Could not load to worker node, will rely on local Docker daemon"
+    }
+fi
+
+# For newer Docker Desktop versions, the image might already be available
+# via the shared Docker daemon, so we don't fail if loading doesn't work
 
 # Set your RapidAPI key
 if [ -z "$RAPIDAPI_KEY" ]; then
