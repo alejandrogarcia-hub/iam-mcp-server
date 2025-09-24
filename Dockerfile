@@ -20,6 +20,10 @@ COPY src ./src
 
 RUN pip install --upgrade pip setuptools wheel \
     && if [ "${APP_VERSION}" = "local" ]; then \
+         if [ "${CI:-}" = "true" ]; then \
+             echo "Error: APP_VERSION must be provided when building in CI" >&2; \
+             exit 1; \
+         fi; \
          pip install --no-cache-dir -r requirements.txt; \
        else \
          pip install --no-cache-dir "iam-mcp-server==${APP_VERSION}"; \
