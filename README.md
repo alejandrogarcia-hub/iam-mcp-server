@@ -199,6 +199,131 @@ docker run --rm -i \
 '{"jsonrpc": "2.0", "method": "prompts/list", "params": {}, "id": 3}'
 ```
 
+#### Production Deployment with Kubernetes
+
+For production environments, deploy the MCP server to Kubernetes and connect via HTTP/SSE:
+
+##### Step 1: Deploy to Kubernetes
+
+```bash
+# Deploy to local Docker Desktop Kubernetes
+./ops/k8s/deploy-local.sh
+
+# Or deploy to production cluster
+kubectl apply -k ops/k8s/
+```
+
+After deployment, the server will be accessible at:
+
+- **Local**: `http://localhost:9999` (with port-forward)
+- **Production**: Your configured ingress URL
+
+##### Step 2: Configure Claude Desktop for Kubernetes Connection
+
+Claude Desktop supports HTTP/SSE MCP servers through **Settings > Connectors** (Pro, Max, Team, and Enterprise plans):
+
+**For Local Kubernetes Deployment:**
+
+1. Ensure the server is deployed and port-forward is active:
+   ```bash
+   ./ops/k8s/deploy-local.sh
+   # This will set up port-forward on localhost:9999
+   ```
+
+2. Open Claude Desktop and navigate to **Settings > Connectors**
+
+3. Click **"Add custom connector"** at the bottom
+
+4. Enter the MCP server URL:
+   - For local Kubernetes: `http://localhost:9999`
+   - For production Kubernetes: `https://your-mcp-server.domain.com`
+
+5. (Optional) Configure authentication in **"Advanced settings"**
+
+6. Click **"Add"** to save
+
+**Important Notes:**
+- HTTP/SSE connectors are configured via Settings > Connectors, NOT in `claude_desktop_config.json`
+- This feature is currently in beta
+- For local Kubernetes, ensure `kubectl port-forward` is running (the deploy script handles this)
+- The server uses SSE for streaming responses back to Claude Desktop
+
+##### Step 3: Test HTTP/SSE Connection
+
+The HTTP/SSE transport works differently than stdio. Here's how to test it:
+
+**Step 1:** First, establish SSE connection to get session ID:
+
+```bash
+# Connect to SSE endpoint and get the session ID
+curl -N -H "Accept: text/event-stream" "http://localhost:9999/sse"
+# Response will include: data: /messages/?session_id=YOUR_SESSION_ID
+```
+
+**Step 2:** Initialize the MCP session (two-step process):
+
+```bash
+# Step 1: Send initialize request
+curl -X POST "http://localhost:9999/messages/?session_id=YOUR_SESSION_ID" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"0.1.0","capabilities":{"prompts":{},"tools":{}},"clientInfo":{"name":"test-client","version":"1.0.0"}},"id":1}'
+# Response: "Accepted" (actual response comes via SSE)
+
+# Step 2: Send initialized notification
+curl -X POST "http://localhost:9999/messages/?session_id=YOUR_SESSION_ID" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"notifications/initialized","params":{"capabilities":{}}}'
+# Response: "Accepted"
+```
+
+**Step 3:** List available prompts and tools:
+
+```bash
+# List prompts
+curl -X POST "http://localhost:9999/messages/?session_id=YOUR_SESSION_ID" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"prompts/list","params":{},"id":2}'
+# Response: "Accepted" (actual list comes via SSE)
+
+# List tools
+curl -X POST "http://localhost:9999/messages/?session_id=YOUR_SESSION_ID" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"tools/list","params":{},"id":3}'
+# Response: "Accepted" (actual list comes via SSE)
+```
+
+**Note:** All HTTP POST requests return "Accepted" immediately. The actual MCP responses are streamed through the SSE connection.
+
+#### Local Development with Docker
+
+For local development without Kubernetes, use Docker with stdio transport:
+
+```json
+{
+  "mcpServers": {
+    "iam-docker": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "--name", "iam-mcp-claude",
+        "-e", "RAPIDAPI_KEY=your_api_key",
+        "-e", "LOG_LEVEL=INFO",
+        "-e", "MCP_TRANSPORT=stdio",
+        "-v", "/path/to/data:/data",
+        "iam-mcp-server:latest"
+      ]
+    }
+  }
+}
+```
+
+**Important notes:**
+
+- Container must run in interactive mode (`-i`) for stdio transport
+- Use `--rm` to clean up containers after disconnection
+- Mount a volume (`-v`) to persist data between sessions
+- Replace `/path/to/data` with your actual data directory
+
 #### Test the container
 
 ```bash
@@ -219,7 +344,7 @@ Key runtime environment variables:
 - `LOG_LEVEL` – structured JSON logs emitted via stdout.
 - `MCP_TRANSPORT` – keep `stdio` for sidecar usage or swap for another supported transport when needed.
 
-Attach the container to your MCP host by pointing the host’s configuration at the container entry point. Share the `/data` volume with the host if it needs direct access to generated artifacts.
+Attach the container to your MCP host by pointing the host's configuration at the container entry point. Share the `/data` volume with the host if it needs direct access to generated artifacts.
 
 Look for `iam_mcp_server-[version].dxt` in the release assets.
 
@@ -333,38 +458,70 @@ IAM supports configuration through environment variables. Create a `.env` file i
 
 ```text
 iam-mcp-server/
+├── ops/                        # Production deployment configuration
+│   ├── k8s/                    # Kubernetes manifests and scripts
+│   │   ├── deploy-local.sh     # Local Docker Desktop deployment script
+│   │   ├── teardown-local.sh   # Local deployment teardown script
+│   │   ├── deployment.yaml     # Kubernetes deployment manifest
+│   │   ├── deployment-local.yaml # Local deployment manifest
+│   │   ├── namespace.yaml      # Namespace configuration
+│   │   ├── service.yaml        # Service configuration
+│   │   └── ingress.yaml        # Ingress configuration
+│   └── README.md               # Deployment documentation
 ├── src/                        # Source code
 │   └── mcp_server_iam/         # Main MCP server package
 │       ├── __init__.py         # Package initialization
 │       ├── __main__.py         # Entry point for running the server
 │       ├── config.py           # Configuration management
+│       ├── logging.py          # Logging configuration
 │       ├── prompt.py           # LLM prompts and instructions
 │       ├── server.py           # MCP server implementation
+│       ├── server_http.py      # HTTP/SSE transport wrapper
 │       ├── tool.py             # MCP tools implementation
 │       └── utils.py            # Utility functions
 ├── tests/                      # Test suite
 │   ├── __init__.py
-│   └── test_mcp_tools.py       # MCP tools tests
+│   ├── test_config.py          # Configuration tests
+│   ├── test_logging.py         # Logging tests
+│   ├── test_manifest.py        # Manifest tests
+│   ├── test_mcp_tools.py       # MCP tools tests
+│   └── test_utils.py           # Utility tests
+├── .dockerignore               # Docker ignore file
 ├── .env_example                # Environment variables template
+├── AGENTS.md                   # Agent documentation
+├── CLAUDE.md                   # Claude Code instructions
+├── Dockerfile                  # Docker container definition
 ├── LICENSE                     # MIT License
 ├── makefile                    # Build and development tasks
+├── manifest.json               # Package manifest
 ├── pyproject.toml              # Project configuration and dependencies
-├── pytest.ini                 # Pytest configuration
+├── pytest.ini                  # Pytest configuration
 ├── README.md                   # This file
+├── requirements.txt            # Python dependencies
+├── requirements-dev.txt        # Development dependencies
 ├── ruff.toml                   # Ruff linter configuration
 └── uv.lock                     # UV dependency lock file
 ```
 
 ### 🔑 Key Components
 
+- **`ops/`**: Production deployment and operations
+  - `k8s/`: Kubernetes deployment manifests and automation scripts
+  - HTTP/SSE server configuration for production environments
+  - Local Docker Desktop Kubernetes deployment support
+
 - **`src/mcp_server_iam/`**: Core MCP server implementation
   - `server.py`: Main MCP server class and protocol handling
+  - `server_http.py`: HTTP/SSE transport implementation
   - `tool.py`: Implementation of MCP tools (job search, etc.)
   - `prompt.py`: LLM prompts for resume generation and job analysis
   - `config.py`: Configuration management and environment variables
+  - `logging.py`: Structured logging configuration
   - `utils.py`: Helper functions and utilities
 
 - **`tests/`**: Comprehensive test suite for MCP tools and functionality
+
+- **Docker support**: Containerized deployment with both stdio and HTTP/SSE transports
 
 - **Configuration files**: Project setup, linting, and dependency management
 

@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iam-mcp-server
+  namespace: mcp
+  labels:
+    app: iam-mcp-server
+    component: mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iam-mcp-server
+  template:
+    metadata:
+      labels:
+        app: iam-mcp-server
+    spec:
+      containers:
+      - name: iam-mcp-server
+        image: iam-mcp-server:latest
+        imagePullPolicy: Never  # Use local Docker image only
+        command: ["python", "-m", "mcp_server_iam.server_http"]
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: MCP_TRANSPORT
+          value: "http"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: HOST
+          value: "0.0.0.0"
+        - name: PORT
+          value: "8080"
+        - name: RAPIDAPI_KEY
+          valueFrom:
+            secretKeyRef:
+              name: iam-mcp-secrets
+              key: rapidapi-key
+        - name: CORS_ORIGINS
+          value: "*"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: iam-mcp-server
+  namespace: mcp
+  labels:
+    app: iam-mcp-server
+spec:
+  type: ClusterIP
+  selector:
+    app: iam-mcp-server
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http

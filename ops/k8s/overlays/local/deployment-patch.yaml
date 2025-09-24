@@ -1,0 +1,16 @@
+# Patch for local development
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iam-mcp-server
+  namespace: mcp
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+      - name: iam-mcp-server
+        imagePullPolicy: Never  # Don't try to pull from registry
+        env:
+        - name: LOG_LEVEL
+          value: "DEBUG"  # More verbose for local testing

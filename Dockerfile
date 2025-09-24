@@ -34,10 +34,17 @@ USER iam
 
 ENV IAM_DATA_ROOT=/data \
     LOG_LEVEL=INFO \
-    MCP_TRANSPORT=stdio
+    MCP_TRANSPORT=stdio \
+    PORT=8080 \
+    HOST=0.0.0.0
 
 VOLUME ["/data"]
 
+# Expose port for HTTP mode
+EXPOSE 8080
+
 ENV PYTHONPATH=/app/src${PYTHONPATH:+:$PYTHONPATH}
 
-ENTRYPOINT ["python", "-m", "mcp_server_iam"]
+# Default to stdio mode, but allow override via CMD
+ENTRYPOINT ["python", "-m"]
+CMD ["mcp_server_iam"]
