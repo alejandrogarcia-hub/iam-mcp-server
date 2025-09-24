@@ -217,4 +217,8 @@ RELEASE_GUIDE.md
 dxt/*.dxt
 dxt/lib/
 
+# Generated requirements files
+requirements.txt
+requirements-dev.txt
+
 backup/

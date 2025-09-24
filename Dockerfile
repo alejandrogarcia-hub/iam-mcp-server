@@ -15,7 +15,7 @@ RUN apt-get update \
 
 ARG APP_VERSION=local
 
-COPY pyproject.toml requirements.txt uv.lock ./
+COPY pyproject.toml README.md requirements.txt requirements-dev.txt uv.lock ./
 COPY src ./src
 
 RUN pip install --upgrade pip setuptools wheel \
