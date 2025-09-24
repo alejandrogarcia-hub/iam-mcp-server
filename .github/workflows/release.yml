@@ -186,7 +186,15 @@ jobs:
         which mcp-server-iam
         deactivate
         rm -rf /tmp/test_env
-        
+
+    - name: Upload distribution artifacts
+      if: steps.check_release.outputs.needed == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-dist
+        path: dist/
+        if-no-files-found: error
+
     - name: Dry run summary
       if: steps.check_release.outputs.needed == 'true' && inputs.dry_run
       run: |
@@ -417,6 +425,12 @@ jobs:
         with:
           ref: ${{ needs.release.outputs.tag_name }}
 
+      - name: Download distribution artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -457,6 +471,3 @@ jobs:
           echo "## Docker Image Release" >> $GITHUB_STEP_SUMMARY
           echo "- **Image**: $REGISTRY/${IMAGE_NAME}" >> $GITHUB_STEP_SUMMARY
           echo "- **Tags**: latest, ${{ needs.release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The DXT extension has been added to the GitHub release." >> $GITHUB_STEP_SUMMARY
-          echo "Users can download it from: https://github.com/alejandrogarcia-hub/iam-mcp-server/releases/tag/${{ needs.release.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY

@@ -26,7 +26,12 @@ RUN pip install --upgrade pip setuptools wheel \
          fi; \
          pip install --no-cache-dir -r requirements.txt; \
        else \
-         pip install --no-cache-dir "iam-mcp-server==${APP_VERSION}"; \
+         WHEEL_PATH=$(ls dist/iam_mcp_server-${APP_VERSION}-*.whl 2>/dev/null || true); \
+         if [ -n "$WHEEL_PATH" ]; then \
+             pip install --no-cache-dir "$WHEEL_PATH"; \
+         else \
+             pip install --no-cache-dir "iam-mcp-server==${APP_VERSION}"; \
+         fi; \
        fi \
     && PYTHONPATH=/app/src python -c "import mcp_server_iam; print('MCP server module loaded successfully')"
 
