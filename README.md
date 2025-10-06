@@ -215,11 +215,13 @@ docker run -i --rm ghcr.io/alejandrogarcia-hub/iam-mcp-server:latest
 ```
 
 **Note on Shutdown:** While MCP supports graceful shutdown via `shutdown` request followed by `exit` notification, in practice:
+
 - **Ctrl+C** immediately terminates the container (SIGINT) - fast but not graceful
 - **Ctrl+D** sends EOF to close stdin - cleaner than Ctrl+C
 - **Graceful shutdown sequence** allows the server to properly clean up resources, save state, and acknowledge before terminating
 
 The graceful shutdown is particularly important in production environments where the server might be handling ongoing operations or needs to persist state before terminating.
+
 ```
 
 #### Production Deployment with Kubernetes
@@ -248,6 +250,7 @@ Claude Desktop supports HTTP/SSE MCP servers through **Settings > Connectors** (
 **For Local Kubernetes Deployment:**
 
 1. Ensure the server is deployed and port-forward is active:
+
    ```bash
    ./ops/k8s/deploy-local.sh
    # This will set up port-forward on localhost:9999
@@ -266,6 +269,7 @@ Claude Desktop supports HTTP/SSE MCP servers through **Settings > Connectors** (
 6. Click **"Add"** to save
 
 **Important Notes:**
+
 - HTTP/SSE connectors are configured via Settings > Connectors, NOT in `claude_desktop_config.json`
 - This feature is currently in beta
 - For local Kubernetes, ensure `kubectl port-forward` is running (the deploy script handles this)

@@ -4,6 +4,7 @@ __pycache__/
 
 # Distribution artifacts
 build/
+dist/
 *.egg-info/
 *.dxt
 
